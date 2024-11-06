@@ -11,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,7 +30,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name="orders")
+@Table(name="orderr")
 public class Order  {
 
 	@Id
@@ -42,7 +43,10 @@ public class Order  {
 
 	@Column(name = "totalAmount",nullable=false)
 	private int totalAmount;
-
+	
+	@Column(name = "reason", length=100)
+	private String reason;
+	
 	@Column(name = "creatAt",nullable=false)
 	private Date creatAt;
 
@@ -50,11 +54,17 @@ public class Order  {
 	private Date updateAt;
 
 	@ManyToOne
-	@JoinColumn(name="users_id", nullable=false)
+	@JoinColumn(name="user_id", nullable=false)
 	private User user;
 
 	@OneToMany(mappedBy="orderr")
 	private List<Orderitem> orderitems;
+	
+	@OneToOne(mappedBy = "order")
+	private Delivery delivery;
+	@ManyToOne
+	@JoinColumn(name = "addressId",nullable=false)
+	private Address address;
 
 
 }

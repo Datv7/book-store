@@ -1,7 +1,5 @@
 package com.example.bookstore.entity;
 
-import java.util.List;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -16,32 +14,32 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-
-/**
- * The persistent class for the images database table.
- *
- */
+@Entity
 @Getter
 @Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity
-@Table(name="image")
-public class Image  {
-
+@Table(name="address") 
+public class Address {
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
 	@Column(name = "id",unique=true, nullable=false, length=50)
 	private String id;
-
-	@Column(name = "url",nullable=false, length=255)
-	private String url;
-
-
+	
+	@Column(name = "sdt",nullable=false, length=20)
+	private String sdt;
+	@Column(name = "detail",nullable=false, length=200)
+	private String detail;
+	
+	@Column(name = "districtId",nullable=false)
+	private int districtId;
+	@Column(name = "provinceId",nullable=false)
+	private int provinceId;
+	@Column(name = "wardId",nullable=false)
+	private int wardId;
+	
 	@ManyToOne
-	@JoinColumn(name="item_id", nullable=false)
-	private Item item;
-
-
+	@JoinColumn(name = "userId",nullable=false)
+	private User user;
 }

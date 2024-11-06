@@ -35,14 +35,14 @@ public class Orderitem  {
 	@Column(name = "quantity",nullable=false)
 	private int quantity;
 
-	@MapsId("itemsId")
+	@MapsId("itemId")
 	@ManyToOne
-	@JoinColumn(name="items_id")
+	@JoinColumn(name="item_id")
 	private Item item;
 
-	@MapsId("ordersId")
+	@MapsId("orderId")
 	@ManyToOne
-	@JoinColumn(name="orders_id")
+	@JoinColumn(name="order_id")
 	private Order orderr;
 
 

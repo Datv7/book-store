@@ -28,7 +28,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name="categories")
+@Table(name="category")
 public class Category  {
 
 	@Id
@@ -42,8 +42,8 @@ public class Category  {
 	@ManyToMany
 	@JoinTable(
 	        name = "categoryItem",
-	        joinColumns = @JoinColumn(name = "categories_id"),
-	        inverseJoinColumns = @JoinColumn(name = "items_id")
+	        joinColumns = @JoinColumn(name = "categorie_id"),
+	        inverseJoinColumns = @JoinColumn(name = "item_id")
 	    )
 	private List<Item> items;
 

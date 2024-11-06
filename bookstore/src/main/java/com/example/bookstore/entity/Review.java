@@ -26,7 +26,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name="reviews")
+@Table(name="review")
 public class Review  {
 
 	@EmbeddedId
@@ -38,14 +38,14 @@ public class Review  {
 	@Column(name = "rate",nullable=false)
 	private int rate;
 
-	@MapsId("itemsId")
+	@MapsId("itemId")
 	@ManyToOne
-	@JoinColumn(name="items_id", nullable=false)
+	@JoinColumn(name="item_id", nullable=false)
 	private Item item;
 
-	@MapsId("usersId")
+	@MapsId("userId")
 	@ManyToOne
-	@JoinColumn(name="users_id", nullable=false)
+	@JoinColumn(name="user_id", nullable=false)
 	private User user;
 
 

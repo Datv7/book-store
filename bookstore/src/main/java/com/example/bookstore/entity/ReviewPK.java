@@ -17,7 +17,7 @@ public class ReviewPK implements Serializable{
 
 	private static final long serialVersionUID = 1L;
 
-	private String usersId;
+	private String userId;
 
-	private String itemsId;
+	private String itemId;
 }

@@ -35,14 +35,14 @@ public class Cartitem  {
 	@Column(name = "quantity",nullable=false)
 	private int quantity;
 
-	@MapsId("cartsId")
+	@MapsId("cartId")
 	@ManyToOne
-	@JoinColumn(name="carts_id")
+	@JoinColumn(name="cart_id")
 	private Cart cart;
 
-	@MapsId("itemsId")
+	@MapsId("itemId")
 	@ManyToOne
-	@JoinColumn(name="items_id")
+	@JoinColumn(name="item_id")
 	private Item item;
 
 

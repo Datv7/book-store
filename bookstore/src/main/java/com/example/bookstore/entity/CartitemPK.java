@@ -20,10 +20,10 @@ import lombok.NoArgsConstructor;
 @Embeddable
 public class CartitemPK implements Serializable {
 	private static final long serialVersionUID = 1L;
-//	@Column(name = "carts_id")
-	private Integer cartsId;
-//	@Column(name = "items_id")
-	private String itemsId;
+//	@Column(name = "cart_id")
+	private Integer cartId;
+//	@Column(name = "item_id")
+	private String itemId;
 
 
 }

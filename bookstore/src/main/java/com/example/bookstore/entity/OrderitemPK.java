@@ -21,9 +21,9 @@ import lombok.NoArgsConstructor;
 public class OrderitemPK implements Serializable {
 	//default serial version id, required for serializable classes.
 	private static final long serialVersionUID = 1L;
-//	@Column(name = "orders_id")
-	private String ordersId;
-//	@Column(name = "items_id")
-	private String itemsId;
+//	@Column(name = "order_id")
+	private String orderId;
+//	@Column(name = "item_id")
+	private String itemId;
 
 }

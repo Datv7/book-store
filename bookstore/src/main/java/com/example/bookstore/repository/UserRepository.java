@@ -9,7 +9,7 @@ import com.example.bookstore.dto.AuthenicationRequest;
 import com.example.bookstore.entity.User;
 @Repository
 public interface UserRepository extends JpaRepository<User, String>{
-	boolean existsByFullNameOrEmailOrSdt(String fullName,String email,String sdt);
+	boolean existsByFullNameOrEmail(String fullName,String email);
 	boolean existsByFullName(String fullName);
 
 	Optional<User> findByFullName(String fullName);

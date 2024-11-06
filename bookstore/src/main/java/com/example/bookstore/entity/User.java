@@ -31,7 +31,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name="users")
+@Table(name="user")
 public class User  {
 
 	@Id
@@ -45,8 +45,6 @@ public class User  {
 	@Column(name = "fullName",nullable=false,unique = true, length=100)
 	private String fullName;
 
-	@Column(name = "sdt",nullable=false,unique = true, length=20)
-	private String sdt;
 
 	@Column(name="password",nullable=false,length = 100)
 	private String password;
@@ -65,6 +63,9 @@ public class User  {
 
 	@OneToMany(mappedBy="user")
 	private List<Review> reviews;
+	
+	@OneToMany(mappedBy="user")
+	private List<Address> address;
 
 	@ManyToMany(cascade = {CascadeType.MERGE,CascadeType.PERSIST},fetch = FetchType.EAGER)
 	@JoinTable(

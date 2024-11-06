@@ -28,7 +28,7 @@ import lombok.Setter;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name="carts") 
+@Table(name="cart") 
 public class Cart  {
 
 	@Id
@@ -42,7 +42,7 @@ public class Cart  {
 
 
 	@ManyToOne
-	@JoinColumn(name="users_id", nullable=false)
+	@JoinColumn(name="user_id", nullable=false)
 	private User user;
 
 

@@ -34,7 +34,7 @@ public class UserService implements IUserService{
 	@Transactional
 	public UserResponse creatUser(UserRequest userRequest) {
 		// TODO Auto-generated method stub
-		if(userRepository.existsByFullNameOrEmailOrSdt(userRequest.getFullName(), userRequest.getEmail(), userRequest.getSdt())) 
+		if(userRepository.existsByFullNameOrEmail(userRequest.getFullName(), userRequest.getEmail())) 
 			throw new AppException(ErrorCode.USER_EXISTED);
 		
 		User user=userMapper.toUser(userRequest);
@@ -56,7 +56,6 @@ public class UserService implements IUserService{
 			.fullName("admin")
 			.password(passwordEncoder.encode("admin"))
 			.email("admin@gmail.com")
-			.sdt("019829821")
 			.roles(List.of(role))
 			.build(); 
 			userRepository.save(admin);
