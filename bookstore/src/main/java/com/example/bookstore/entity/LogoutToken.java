@@ -20,6 +20,6 @@ public class LogoutToken {
 	@Id
 	@Column(name = "id")
 	private String id;
-	@Column(name = "expire")
+	@Column(name = "expire",nullable = false)
 	private Date expire;
 }

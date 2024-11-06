@@ -13,6 +13,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -67,11 +68,12 @@ public class User  {
 	@OneToMany(mappedBy="user")
 	private List<Address> address;
 
-	@ManyToMany(cascade = {CascadeType.MERGE,CascadeType.PERSIST},fetch = FetchType.EAGER)
+	@ManyToMany(fetch = FetchType.EAGER)
 	@JoinTable(
 	        name = "userRole",
 	        joinColumns = @JoinColumn(name = "user_id"),
-	        inverseJoinColumns = @JoinColumn(name = "role_id")
+	        inverseJoinColumns = @JoinColumn(name = "role_id"),
+	        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "role_id"})
 	    )
 	private List<Role> roles;
 

@@ -39,12 +39,7 @@ public class Category  {
 	@Column(name = "name",nullable=false, length=100)
 	private String name;
 
-	@ManyToMany
-	@JoinTable(
-	        name = "categoryItem",
-	        joinColumns = @JoinColumn(name = "categorie_id"),
-	        inverseJoinColumns = @JoinColumn(name = "item_id")
-	    )
+	@ManyToMany(mappedBy = "categories")
 	private List<Item> items;
 
 

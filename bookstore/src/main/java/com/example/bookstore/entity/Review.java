@@ -1,5 +1,6 @@
 package com.example.bookstore.entity;
 
+import java.util.Date;
 import java.util.List;
 
 import jakarta.persistence.Column;
@@ -37,6 +38,9 @@ public class Review  {
 
 	@Column(name = "rate",nullable=false)
 	private int rate;
+	
+	@Column(name = "createAt",nullable=false)
+	private Date createAt;
 
 	@MapsId("itemId")
 	@ManyToOne
