@@ -17,4 +17,6 @@ public class UserRequest {
 	private String email;
 	@NotBlank(message = "INFOR_EMPTY")
 	private String password;
+	@NotBlank(message = "INFOR_EMPTY")
+	private String sdt;
 }

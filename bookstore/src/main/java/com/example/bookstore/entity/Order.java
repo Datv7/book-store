@@ -1,5 +1,6 @@
 package com.example.bookstore.entity;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -38,14 +39,11 @@ public class Order  {
 	@Column(name = "id",nullable=false, length=50)
 	private String id;
 
-	@Column(name = "status",nullable=false, length=50)
-	private String status;
-
 	@Column(name = "totalAmount",nullable=false)
 	private int totalAmount;
 	
-	@Column(name = "reason", length=100)
-	private String reason;
+	@Column(name = "shippingFee",nullable=false)
+	private int shippingFee;
 	
 	@Column(name = "creatAt",nullable=false)
 	private Date creatAt;
@@ -56,15 +54,18 @@ public class Order  {
 	@ManyToOne
 	@JoinColumn(name="user_id", nullable=false)
 	private User user;
-
+	@Builder.Default
 	@OneToMany(mappedBy="orderr")
-	private List<Orderitem> orderitems;
+	private List<Orderitem> orderitems=new ArrayList<Orderitem>();
 	
-	@OneToOne(mappedBy = "order")
-	private Delivery delivery;
 	@ManyToOne
 	@JoinColumn(name = "addressId",nullable=false)
 	private Address address;
 
+	@OneToOne(mappedBy = "order")
+	private Payment payment;
+	
+	@OneToMany(mappedBy = "order")
+	private List<OrderStatus> status;
 
 }

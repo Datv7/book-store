@@ -1,7 +1,6 @@
 package com.example.bookstore.entity;
 
 import java.util.Date;
-import java.util.List;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;

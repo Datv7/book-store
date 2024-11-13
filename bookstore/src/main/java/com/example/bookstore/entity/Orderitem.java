@@ -1,7 +1,5 @@
 package com.example.bookstore.entity;
 
-import java.util.List;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;

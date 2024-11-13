@@ -11,7 +11,7 @@ import com.example.bookstore.dto.RoleResponse;
 import com.example.bookstore.entity.Role;
 import com.example.bookstore.mapper.RoleMapper;
 import com.example.bookstore.repository.RoleRepository;
-import com.example.bookstore.service.imp.IRoleService;
+import com.example.bookstore.service.Iservice.IRoleService;
 @Service
 public class RoleService implements IRoleService{
 	@Autowired

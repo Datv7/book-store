@@ -1,8 +1,8 @@
 package com.example.bookstore.entity;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -13,8 +13,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -43,9 +43,11 @@ public class User  {
 	@Column(name = "email",nullable=false,unique = true, length=100)
 	private String email;
 
-	@Column(name = "fullName",nullable=false,unique = true, length=100)
+	@Column(name = "fullName",nullable=false, length=100)
 	private String fullName;
 
+	@Column(name = "sdt",nullable=false,unique = true, length=15)
+	private String sdt;
 
 	@Column(name="password",nullable=false,length = 100)
 	private String password;
@@ -56,18 +58,23 @@ public class User  {
 	@Column(name = "version",nullable=false)
 	private int version;
 
+	@Builder.Default
 	@OneToMany(mappedBy="user")
-	private List<Cart> carts;
+	private List<Cart> carts=new ArrayList<Cart>();
 
+	@Builder.Default
 	@OneToMany(mappedBy="user")
-	private List<Order> orders;
+	private List<Order> orders=new ArrayList<Order>();
 
+	@Builder.Default
 	@OneToMany(mappedBy="user")
-	private List<Review> reviews;
+	private List<Review> reviews=new ArrayList<Review>();
 	
+	@Builder.Default
 	@OneToMany(mappedBy="user")
-	private List<Address> address;
+	private List<Address> address=new ArrayList<Address>();
 
+	@Builder.Default
 	@ManyToMany(fetch = FetchType.EAGER)
 	@JoinTable(
 	        name = "userRole",
@@ -75,6 +82,6 @@ public class User  {
 	        inverseJoinColumns = @JoinColumn(name = "role_id"),
 	        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "role_id"})
 	    )
-	private List<Role> roles;
+	private List<Role> roles=new ArrayList<Role>();
 
 }

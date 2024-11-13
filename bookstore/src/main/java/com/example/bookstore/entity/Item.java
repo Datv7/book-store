@@ -1,5 +1,6 @@
 package com.example.bookstore.entity;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -75,19 +76,23 @@ public class Item  {
 	
 	@Column(name = "soldCount",nullable=false)
 	private int soldCount;
-	
-	@OneToMany(mappedBy="item",fetch = FetchType.EAGER)
-	private List<Cartitem> cartitems;
+	@Builder.Default
+	@OneToMany(mappedBy="item",fetch = FetchType.LAZY)
+	private List<Cartitem> cartitems=new ArrayList<Cartitem>();
 
-	@OneToMany(mappedBy="item",fetch = FetchType.EAGER)
-	private List<Image> images;
+	@Builder.Default
+	@OneToMany(mappedBy="item",fetch = FetchType.LAZY)
+	private List<Image> images=new ArrayList<Image>();
 
-	@OneToMany(mappedBy="item",fetch = FetchType.EAGER)
-	private List<Orderitem> orderitems;
+	@Builder.Default
+	@OneToMany(mappedBy="item",fetch = FetchType.LAZY)
+	private List<Orderitem> orderitems=new ArrayList<Orderitem>();
 
-	@OneToMany(mappedBy="item",fetch = FetchType.EAGER)
-	private List<Review> reviews;
+	@Builder.Default
+	@OneToMany(mappedBy="item",fetch = FetchType.LAZY)
+	private List<Review> reviews=new ArrayList<Review>();
 
+	@Builder.Default
 	@ManyToMany
 	@JoinTable(
 	        name = "categoryItem",
@@ -95,6 +100,6 @@ public class Item  {
 	        inverseJoinColumns = @JoinColumn(name = "category_id"),
 	        uniqueConstraints = @UniqueConstraint(columnNames = {"item_id", "category_id"})
 	    )
-	private List<Category> categories;
+	private List<Category> categories=new ArrayList<Category>();
 
 }

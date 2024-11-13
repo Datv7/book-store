@@ -1,26 +1,24 @@
 package com.example.bookstore.configuration;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisPassword;
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import com.example.bookstore.entity.Role;
-import com.example.bookstore.entity.User;
 import com.example.bookstore.repository.RoleRepository;
-import com.example.bookstore.repository.UserRepository;
-import com.example.bookstore.service.imp.IUserService;
+import com.example.bookstore.service.Iservice.IUserService;
 
 @Configuration
 public class AppConfig {
-	@Autowired
-	private PasswordEncoder encoder;
-	@Autowired
-	private UserRepository userRepository;
 	@Autowired
 	private RoleRepository roleRepository;
 	@Autowired
@@ -44,5 +42,36 @@ public class AppConfig {
 				iUserService.creatAdmin();
 			};
 	}
+	
+	@Value("${spring.redis.host}")
+	private String redisHost;
+	
+	@Value("${spring.redis.port}")
+	private int redisPort;
+	
+	@Value("${spring.redis.password}")
+	private String redisPassword;
+	@Bean
+    public RedisConnectionFactory redisConnectionFactory() {
+        RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration();
+        redisStandaloneConfiguration.setHostName(redisHost);
+        redisStandaloneConfiguration.setPort(redisPort);
+        redisStandaloneConfiguration.setPassword(RedisPassword.of(redisPassword));
+        
+        return new LettuceConnectionFactory(redisStandaloneConfiguration);
+    }
+	@Bean
+	public RedisTemplate<String, Object> redisTemplate(){
+		RedisTemplate<String, Object> redisTemplate=new RedisTemplate<String, Object>();
+		redisTemplate.setConnectionFactory(redisConnectionFactory());
+		
+		redisTemplate.setKeySerializer(new StringRedisSerializer());	
+		redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+		
+		redisTemplate.setHashKeySerializer(new StringRedisSerializer());
+		redisTemplate.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
+		return redisTemplate;
+	}
+	
 	
 }

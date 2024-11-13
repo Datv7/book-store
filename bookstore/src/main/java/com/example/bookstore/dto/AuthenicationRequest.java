@@ -11,7 +11,7 @@ import lombok.Setter;
 public class AuthenicationRequest {
 	
 	@NotBlank(message = "INFOR_EMPTY")
-	private String fullName;
+	private String identifier ;
 	@NotBlank(message = "INFOR_EMPTY")
 	private String password;
 }

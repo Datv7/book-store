@@ -16,7 +16,9 @@ import lombok.NoArgsConstructor;
 public class ApiRespond<T> {
 	@Builder.Default
 	private int code=1000;
-	private String massage;
+	@Builder.Default
+	private String massage="succeed";
+	
 	private T results;
 	public int getCode() {
 		return code;

@@ -5,6 +5,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.StringJoiner;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -21,12 +22,14 @@ import com.example.bookstore.configuration.AppException;
 import com.example.bookstore.configuration.CustomJwtDecoder;
 import com.example.bookstore.configuration.ErrorCode;
 import com.example.bookstore.dto.AuthenicationRequest;
+import com.example.bookstore.dto.UserRequest;
 import com.example.bookstore.entity.LogoutToken;
 import com.example.bookstore.entity.User;
 import com.example.bookstore.repository.LogoutTokenRepository;
 import com.example.bookstore.repository.UserRepository;
-import com.example.bookstore.service.imp.IAuthenicationService;
-import com.example.bookstore.service.imp.INotification;
+import com.example.bookstore.service.Iservice.IAuthenicationService;
+import com.example.bookstore.service.Iservice.INotification;
+import com.example.bookstore.service.Iservice.IUserService;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -60,25 +63,24 @@ public class AuthenicationService implements IAuthenicationService{
 	private LogoutTokenRepository logoutTokenRepository;
 	@Autowired
 	private INotification iNotification;
+	@Autowired
+	private IUserService iUserService;
 	
 	@Override
 	public String[] login(AuthenicationRequest authenicationRequest) {
 		// TODO Auto-generated method stub
-		User temp= userRepository.findByFullName(
-				authenicationRequest.getFullName())
-				.orElseThrow(()->new AppException(ErrorCode.USER_NOT_EXISTED) );
-		if(temp.getVersion()==-1) throw new AppException(ErrorCode.USER_NOT_EXISTED);
-		boolean authenticated=passwordEncoder.matches(authenicationRequest.getPassword(), temp.getPassword());
-		if(!authenticated) throw new AppException(ErrorCode.UNAUTHENTICATED);
+		User temp= iUserService.findUser(authenicationRequest.getIdentifier());
+		boolean passwordCorrect=passwordEncoder.matches(authenicationRequest.getPassword(), temp.getPassword());
+		if(!passwordCorrect) throw new AppException(ErrorCode.UNAUTHENTICATED);
 		
-		String[] token= {genToken(temp, accessExpiration),genToken(temp, refreshExpiration)};
+		String[] token= {genToken(temp, accessExpiration),genToken(temp, refreshExpiration),temp.getFullName()};
 		return token;
 	}
 	
 	public String genToken(User user,int expire) {
 		JWSHeader header=new JWSHeader(JWSAlgorithm.HS512);
 		JWTClaimsSet claimsSet= new JWTClaimsSet.Builder()
-				.subject(user.getFullName())
+				.subject(user.getId())
 				.expirationTime(Date.from(
 						Instant.now().plus(expire,ChronoUnit.SECONDS)))
 				.jwtID(UUID.randomUUID().toString())
@@ -126,10 +128,7 @@ public class AuthenicationService implements IAuthenicationService{
 		Date date=Date.from(jwt.getExpiresAt());
 		Date date2=new Date();
 		long remainingTime2=TimeUnit.MILLISECONDS.toSeconds(date.getTime()-date2.getTime());
-		log.info("{}-{}-{}",remainingTime2,date.getSeconds(),date2.getSeconds());
 		System.out.println("ok");
-		if(remainingTime2<=0) throw new AppException(ErrorCode.UNAUTHENTICATED);
-		System.out.println("àter");
 		String[] token= {genTokenAsRefresh(jwt,accessExpiration),null};
 		log.info(token[1]);
 		if(remainingTime2<remainingTime) 
@@ -161,13 +160,21 @@ public class AuthenicationService implements IAuthenicationService{
 	}
 
 	@Override
-	public String forgotPass(String fullName, String passwordResetPageUrl) {
+	public String forgotPass(String email, String resetPasswordPage) {
 		// TODO Auto-generated method stub
-		User user= userRepository.findByFullName(fullName).orElseThrow(()->new AppException(ErrorCode.USER_NOT_EXISTED));
-		if(user.getVersion()==-1) throw new AppException(ErrorCode.USER_NOT_EXISTED);
-		String email=user.getEmail();
-		String resetId=UUID.randomUUID().toString();
-		iNotification.sendNotification(fullName,email,resetId, passwordResetPageUrl);
-		return passwordEncoder.encode(resetId);
+		iUserService.findUserByEmail(email);
+		String token=UUID.randomUUID().toString();
+		iNotification.sendNotification(email,token, resetPasswordPage);
+		return token;
+	}
+	@Override
+	public int register(UserRequest userRequest) {
+		if(
+			userRepository.existsByEmailOrSdt(userRequest.getEmail(), userRequest.getSdt())
+			) throw new AppException(ErrorCode.USER_EXISTED);
+		int otp = ThreadLocalRandom.current().nextInt(100000, 1000000);
+		iNotification.sendOtp(otp, userRequest.getEmail());
+		
+		return otp;
 	}
 }

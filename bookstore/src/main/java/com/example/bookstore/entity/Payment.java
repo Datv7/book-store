@@ -16,29 +16,29 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Entity
 @Getter
 @Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name="delivery") 
-public class Delivery {
+@Entity
+@Table(name="payment")
+public class Payment {
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
 	@Column(name = "id",unique=true, nullable=false, length=50)
 	private String id;
-	@Column(name = "fee",nullable=false)
-	private int fee;
+	
+	@Column(name = "status",nullable=false)
+	private String status;
+	
+	@Column(name = "type",nullable=false)
+	private String type;
+	
 	@Column(name = "date")
 	private Date date;
-	@Column(name = "status",nullable=false, length=50)
-	private String status;
-	@Column(name = "count",nullable=false)
-	private int count;
-	@Column(name = "createAt",nullable=false)
-	private Date createAt;
+	
 	@OneToOne
-	@JoinColumn(name = "orderId",nullable = false)
+	@JoinColumn(name = "orderId")
 	private Order order;
 }

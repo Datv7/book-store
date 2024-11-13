@@ -37,7 +37,7 @@ public class CustomJwtDecoder implements JwtDecoder{
 		System.out.println("id");
 		int versionUser=((Long)jwt.getClaim("versionUser")).intValue();
 		System.out.println("ver");
-		User temp= userRepository.findByFullName(jwt.getSubject()).orElseThrow();
+		User temp= userRepository.findById(jwt.getSubject()).orElseThrow(()->new AppException(ErrorCode.UNAUTHENTICATED));
 		int version=temp.getVersion();
 		if(version==-1) throw new AppException(ErrorCode.UNAUTHENTICATED);
 		if(logoutTokenRepository.existsById(id) || version!=versionUser) throw new AppException(ErrorCode.UNAUTHENTICATED);

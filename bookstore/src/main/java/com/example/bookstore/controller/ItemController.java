@@ -15,8 +15,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.bookstore.dto.ApiRespond;
 import com.example.bookstore.entity.Item;
-import com.example.bookstore.service.imp.IItemService;
+import com.example.bookstore.service.Iservice.IItemService;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+
+@SecurityRequirement(name = "Bearer Authentication")
 @RestController
 @RequestMapping("/items")
 public class ItemController {
@@ -32,21 +35,19 @@ public class ItemController {
 		return result;
 	}
 	@PostMapping("")
-	public ApiRespond<Item> creatRole(@RequestBody Item item){
+	public ApiRespond creatItem(@RequestBody Item item){
 		
-		ApiRespond<Item> result= ApiRespond.<Item>builder()
-				.results(iItemService.creatItem(item))
-				.build();
-		return result;
-	}
-	@PutMapping("/{id}")
-	public ApiRespond<Item> updateRole(@PathVariable String id,@RequestBody Item item){
 		
-		ApiRespond<Item> result= ApiRespond.<Item>builder()
-				.results(iItemService.updateItem(id,item))
-				.build();
-		 return result;
+		return ApiRespond.builder().build();
 	}
+//	@PutMapping("/{id}")
+//	public ApiRespond<Item> updateRole(@PathVariable String id,@RequestBody Item item){
+//		
+//		ApiRespond<Item> result= ApiRespond.<Item>builder()
+//				.results(iItemService.updateItem(id,item))
+//				.build();
+//		 return result;
+//	}
 	@DeleteMapping("/{id}")
 	public ApiRespond<Object> deleteItem(@PathVariable String id){
 		iItemService.deleteItem(id);

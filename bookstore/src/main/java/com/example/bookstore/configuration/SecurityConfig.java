@@ -33,14 +33,14 @@ public class SecurityConfig {
 	}
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-		String[] publicUrl={"/login","/users/register","/refresh","/forgotPass","/users/resetPass","/swagger-ui/**","/v3/api-docs/**"};
+		String[] publicUrl={"/users/test","/auth/**","/swagger-ui/**","/v3/api-docs/**"};
 		http.authorizeHttpRequests(configure-> configure
 //				.anyRequest().permitAll() //bỏ comment dòng này để tắt 
 				.requestMatchers("/users/cus").hasRole("CUSTOMER")
 				.requestMatchers("/users/admin").hasRole("ADMIN")
-				.requestMatchers(publicUrl).permitAll()
-				.requestMatchers("/logout/k").authenticated()
 				
+				.requestMatchers("/auth/logout").authenticated()
+				.requestMatchers(publicUrl).permitAll()
 				);
 		
 		http.oauth2ResourceServer(oauth2->oauth2.jwt(jwtConfigurer->

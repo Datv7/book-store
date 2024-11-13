@@ -1,7 +1,6 @@
 package com.example.bookstore.entity;
 
 import java.io.Serializable;
-import java.util.List;
 
 import jakarta.persistence.Embeddable;
 import lombok.AllArgsConstructor;

@@ -3,41 +3,36 @@ package com.example.bookstore.dto;
 import java.util.Date;
 import java.util.List;
 
-import com.example.bookstore.entity.Cartitem;
 import com.example.bookstore.entity.Category;
 import com.example.bookstore.entity.Image;
-import com.example.bookstore.entity.Orderitem;
-import com.example.bookstore.entity.Review;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.UniqueConstraint;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
+@Builder
 public class ItemRequest {
-	private String id;
+	@NotBlank(message = "INFOR_EMPTY")
 	private String author;
-
+	@NotBlank(message = "INFOR_EMPTY")
 	private String title;
-
+	@NotBlank(message = "INFOR_EMPTY")
 	private String description;
-	
+		
 	private String coverType;
 	
 	private String translator;
-	
+	@Min(value = 0,message = "INFOR_INVALID")
 	private int price;
-	
+	@Min(value = 0,message = "INFOR_INVALID")
 	private int width;
-	
+	@Min(value = 0,message = "INFOR_INVALID")
 	private int height;
-	
+	@Min(value = 0,message = "INFOR_INVALID")
 	private int page;
 	
 	private Date publishDate;
@@ -46,7 +41,7 @@ public class ItemRequest {
 	
 	private int soldCount;
 
-	private List<Image> images;
+	private List<String> urlImages;
 
-	private List<Category> categories;
+	private List<Integer> categories;
 }

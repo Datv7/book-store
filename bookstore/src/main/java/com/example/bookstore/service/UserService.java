@@ -12,13 +12,12 @@ import com.example.bookstore.configuration.BaseRole;
 import com.example.bookstore.configuration.ErrorCode;
 import com.example.bookstore.dto.AuthenicationRequest;
 import com.example.bookstore.dto.UserRequest;
-import com.example.bookstore.dto.UserResponse;
 import com.example.bookstore.entity.Role;
 import com.example.bookstore.entity.User;
 import com.example.bookstore.mapper.UserMapper;
 import com.example.bookstore.repository.RoleRepository;
 import com.example.bookstore.repository.UserRepository;
-import com.example.bookstore.service.imp.IUserService;
+import com.example.bookstore.service.Iservice.IUserService;
 @Service
 public class UserService implements IUserService{
 
@@ -32,10 +31,8 @@ public class UserService implements IUserService{
 	private PasswordEncoder passwordEncoder;
 	@Override
 	@Transactional
-	public UserResponse creatUser(UserRequest userRequest) {
+	public void creatUser(UserRequest userRequest) {
 		// TODO Auto-generated method stub
-		if(userRepository.existsByFullNameOrEmail(userRequest.getFullName(), userRequest.getEmail())) 
-			throw new AppException(ErrorCode.USER_EXISTED);
 		
 		User user=userMapper.toUser(userRequest);
 		user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
@@ -44,8 +41,7 @@ public class UserService implements IUserService{
 		user.setRoles(List.of(role));
 		
 		user=userRepository.save(user);
-		UserResponse temp=new UserResponse(user.getId(), user.getFullName());
-		return temp;
+		
 	}
 	@Transactional
 	@Override
@@ -56,6 +52,8 @@ public class UserService implements IUserService{
 			.fullName("admin")
 			.password(passwordEncoder.encode("admin"))
 			.email("admin@gmail.com")
+			.sdt("0123456789")
+//			)
 			.roles(List.of(role))
 			.build(); 
 			userRepository.save(admin);
@@ -65,14 +63,22 @@ public class UserService implements IUserService{
 	@Transactional
 	public void resetByKey(AuthenicationRequest authenicationRequest,boolean logoutAll) {
 		// TODO Auto-generated method stub
-		User user=findUser(authenicationRequest.getFullName());
+		User user=findUserByEmail(authenicationRequest.getIdentifier());
 		user.setPassword(passwordEncoder.encode(authenicationRequest.getPassword()));
 		if(logoutAll) user.setVersion(user.getVersion()+1);
 		userRepository.save(user);
 		
 	}
-	public User findUser(String fullName) {
-		User user=userRepository.findByFullName(fullName).orElseThrow(()-> new AppException(ErrorCode.USER_NOT_EXISTED));
+	
+	@Override
+	public User findUser(String identifier) {
+		User user=userRepository.findByEmailOrSdt(identifier,identifier).orElseThrow(()-> new AppException(ErrorCode.USER_NOT_EXISTED));
+		if(user.getVersion()==-1) throw new AppException(ErrorCode.USER_NOT_EXISTED);
+		return user;
+	}
+	@Override
+	public User findUserByEmail(String email) {
+		User user=userRepository.findByEmail(email).orElseThrow(()-> new AppException(ErrorCode.USER_NOT_EXISTED));
 		if(user.getVersion()==-1) throw new AppException(ErrorCode.USER_NOT_EXISTED);
 		return user;
 	}

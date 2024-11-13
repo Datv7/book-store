@@ -1,7 +1,5 @@
 package com.example.bookstore.entity;
 
-import java.util.List;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -38,7 +36,9 @@ public class Image  {
 	@Column(name = "url",nullable=false, length=255)
 	private String url;
 
-
+	@Column(name = "isMain",nullable=false)
+	private boolean isMain;
+	
 	@ManyToOne
 	@JoinColumn(name="item_id", nullable=false)
 	private Item item;

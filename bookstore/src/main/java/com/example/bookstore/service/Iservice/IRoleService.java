@@ -1,4 +1,4 @@
-package com.example.bookstore.service.imp;
+package com.example.bookstore.service.Iservice;
 
 import java.util.List;
 

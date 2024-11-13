@@ -21,7 +21,10 @@ public enum ErrorCode {
     USER_NOT_EXISTED(1105, "User not existed", HttpStatus.NOT_FOUND),
     
     INFOR_EMPTY(1106, "Field cannot be null or empty", HttpStatus.BAD_REQUEST),
-    INFOR_INVALID(1107, "Field invalid", HttpStatus.BAD_REQUEST);
+    INFOR_INVALID(1107, "Field invalid", HttpStatus.BAD_REQUEST),
+	
+
+	;
     
     
     

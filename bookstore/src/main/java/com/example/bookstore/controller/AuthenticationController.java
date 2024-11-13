@@ -1,40 +1,88 @@
 package com.example.bookstore.controller;
 
 import java.util.Map;
-import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.bookstore.configuration.AppException;
 import com.example.bookstore.configuration.ErrorCode;
 import com.example.bookstore.dto.ApiRespond;
 import com.example.bookstore.dto.AuthenicationRequest;
+import com.example.bookstore.dto.UserRequest;
 import com.example.bookstore.dto.UserResponse;
-import com.example.bookstore.service.imp.IAuthenicationService;
+import com.example.bookstore.service.RedisService;
+import com.example.bookstore.service.Iservice.IAuthenicationService;
+import com.example.bookstore.service.Iservice.IUserService;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestController
+@RequestMapping("/auth")
+@SecurityRequirement(name = "Bearer Authentication")
 public class AuthenticationController {
 	@Value("${jwt.expiration.refresh}")
 	private int refreshExpiration;
+	@Value("${expiration.otp}")
+	private int expirationOtp;
+	@Value("${expiration.reset_password}")
+	private int resetPasswordExpiration;
 	
 	@Autowired
+	private RedisService redisService;
+	
+	@Autowired
+	private PasswordEncoder passwordEncoder;
+
+	@Autowired
+	private IUserService iUserService;
+	@Autowired
 	private IAuthenicationService iAuthenicationService;
-	@GetMapping("/login")
-	public ApiRespond<String> login(HttpServletResponse response,@Valid @RequestBody AuthenicationRequest authenicationRequest){
+	
+	@PostMapping("/register")
+	public ApiRespond<String> register(@Valid @RequestBody UserRequest userRequest){
+		int otp=iAuthenicationService.register(userRequest);
+		
+		redisService.value.set("user:pending:"+userRequest.getEmail(), userRequest,expirationOtp,TimeUnit.SECONDS);	
+		redisService.value.set("otp:email:"+userRequest.getEmail(), otp, expirationOtp, TimeUnit.SECONDS);
+//	)
+		return ApiRespond.<String>builder().build();
+	}
+	@GetMapping("/verify-otp")
+	public ApiRespond<String> verifyOtp(
+			@RequestParam(name = "otp") int otp,
+			@NotBlank(message = "INFOR_EMPTY") @RequestParam(name = "email") String email){
+		
+		if( ((int)redisService.value.get("otp:email:"+email)) ==otp) {
+			UserRequest userRequest=(UserRequest)redisService.value.get("user:pending:"+email);
+			iUserService.creatUser(userRequest);
+			redisService.template.delete("otp:email:"+email);
+			redisService.template.delete("user:pending:"+email);
+			return ApiRespond.<String>builder().build();
+		}
+		throw new AppException(ErrorCode.KEY_INVALID);
+	}
+	
+	@PostMapping("/login")
+	public ApiRespond<UserResponse> login(HttpServletResponse response,@Valid @RequestBody AuthenicationRequest authenicationRequest){
 		String[] token=iAuthenicationService.login(authenicationRequest);
-		ApiRespond<String> result=ApiRespond.<String>builder()
-				.results(token[0])
+		UserResponse userResponse=new UserResponse(token[0],token[2]);
+		ApiRespond<UserResponse> result=ApiRespond.<UserResponse>builder()
+				.results(userResponse)
 				.build();
 		Cookie cookie=new Cookie("refreshToken", token[1]);
 		cookie.setHttpOnly(true);
@@ -43,8 +91,8 @@ public class AuthenticationController {
 		response.addCookie(cookie);
 		return result;
 	}
-	@GetMapping("/logout/k")
-	public ApiRespond logout(HttpServletRequest request,HttpServletResponse response,@RequestBody Map<String, Object> json) {
+	@PostMapping("/logout")
+	public ApiRespond<String> logout(HttpServletRequest request,HttpServletResponse response,@RequestBody Map<String, Object> json) {
 		System.out.println("lkjsd");
 		String accessToken=(String)json.get("accessToken");
 		System.out.println(accessToken);
@@ -58,14 +106,13 @@ public class AuthenticationController {
 				cookie.setPath("/");
 				response.addCookie(cookie);
 				
-				System.out.println("refresh xoacooki"+cookie.getValue());
 				break;
 			}
 		}
-		return ApiRespond.builder().build();
+		return ApiRespond.<String>builder().build();
 	}
-	@GetMapping("/refresh")
-	public ApiRespond<String> refresh(HttpServletRequest request,HttpServletResponse response){
+	@GetMapping("/refresh-token")
+	public ApiRespond<UserResponse> refresh(HttpServletRequest request,HttpServletResponse response){
 		String refreshToken=null;
 		Cookie[] cookies= request.getCookies();
 		for(Cookie cookie:cookies) {
@@ -86,25 +133,36 @@ public class AuthenticationController {
 			cookie.setPath("/");
 			response.addCookie(cookie);
 		}
-		return ApiRespond.<String>builder()
-				.results(token[0])
+		return ApiRespond.<UserResponse>builder()
+				.results(new UserResponse(token[0],null))
 				.build();
 	}
-	@GetMapping("/forgotPass")
+	@PostMapping("/forgot-password")
 	public ApiRespond<String> forgotPass(HttpServletResponse response,@RequestBody Map<String, Object> json){
-		String fullName=(String)json.get("fullName");
-		String passwordResetPageUrl=(String)json.get("passwordResetPageUrl");
-		if(passwordResetPageUrl==null) passwordResetPageUrl="http://localhost:8080/forgotpass.html";
-		if(fullName==null) throw new AppException(ErrorCode.USER_NOT_EXISTED);
+		String email=(String)json.get("email");
+		String resetPasswordPage=(String)json.get("resetPasswordPage");
+		if(resetPasswordPage==null) resetPasswordPage="http://localhost:8080/forgotpass.html";
+		if(email==null) throw new AppException(ErrorCode.USER_NOT_EXISTED);
 		
 		
-		String resetId= iAuthenicationService.forgotPass(fullName,passwordResetPageUrl);
-		Cookie cookie=new Cookie(fullName,resetId);
-		cookie.setHttpOnly(true);
-		cookie.setMaxAge(180);
-		cookie.setPath("/");
-		response.addCookie(cookie);
+		String token= iAuthenicationService.forgotPass(email,resetPasswordPage);
+		redisService.value.set("token:email:"+email, token,resetPasswordExpiration,TimeUnit.SECONDS);
 		return ApiRespond.<String>builder().build();
+	}
+	@PostMapping("/reset-password")
+	public ApiRespond<String> resetAsForgot(HttpServletRequest request,HttpServletResponse response,
+			@Valid @RequestBody AuthenicationRequest authenicationRequest,
+			@NotBlank(message = "INFOR_EMPTY") @RequestParam(name ="token" ) String token,
+			@RequestParam(name ="logoutall" ) boolean logoutAll) {
+		if(
+			(redisService.value.get("token:email:"+authenicationRequest.getIdentifier()))
+			.equals(token)){
+			iUserService.resetByKey(authenicationRequest,logoutAll);
+			redisService.template.delete("token:email:"+authenicationRequest.getIdentifier());
+			return ApiRespond.<String>builder().build();
+		}
+		
+		throw new AppException(ErrorCode.KEY_INVALID);
 	}
 	
 	

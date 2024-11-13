@@ -32,12 +32,14 @@ public class Address {
 	@Column(name = "detail",nullable=false, length=200)
 	private String detail;
 	
-	@Column(name = "districtId",nullable=false)
-	private int districtId;
-	@Column(name = "provinceId",nullable=false)
-	private int provinceId;
-	@Column(name = "wardId",nullable=false)
-	private int wardId;
+	@Column(name = "district",nullable=false)
+	private String district;
+	
+	@Column(name = "province",nullable=false)
+	private String province;
+	
+	@Column(name = "ward",nullable=false)
+	private String ward;
 	
 	@ManyToOne
 	@JoinColumn(name = "userId",nullable=false)

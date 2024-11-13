@@ -17,8 +17,11 @@ import com.example.bookstore.configuration.AppException;
 import com.example.bookstore.configuration.ErrorCode;
 import com.example.bookstore.dto.ApiRespond;
 import com.example.bookstore.dto.RoleResponse;
-import com.example.bookstore.service.imp.IRoleService;
+import com.example.bookstore.service.Iservice.IRoleService;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+
+@SecurityRequirement(name = "Bearer Authentication")
 @RestController
 @RequestMapping("/roles")
 public class RoleController {
