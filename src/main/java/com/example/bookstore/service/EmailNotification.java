@@ -1,6 +1,7 @@
 package com.example.bookstore.service;
 
 import java.io.UnsupportedEncodingException;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -70,7 +71,8 @@ public class EmailNotification implements INotification{
 		
 	}
 	@Override
-	public void sendOtp(int otp,String email) {
+	public int sendOtp(String email) {
+		int otp = ThreadLocalRandom.current().nextInt(100000, 1000000);
 		// TODO Auto-generated method stub
 		MimeMessage mailMessage=javaMailSender.createMimeMessage();
 		MimeMessageHelper messageHelper=new MimeMessageHelper(mailMessage);
@@ -108,6 +110,7 @@ public class EmailNotification implements INotification{
 		} 
 		
 		javaMailSender.send(mailMessage);
+		return otp;
 	}
 
 }

@@ -1,13 +1,19 @@
 package com.example.bookstore.service.Iservice;
 
 import java.util.List;
+import java.util.Set;
+
+import org.springframework.data.domain.Page;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.example.bookstore.dto.ItemRequest;
-import com.example.bookstore.dto.RoleResponse;
 import com.example.bookstore.entity.Item;
 
 public interface IItemService {
-	List<Item> findAll();
-	void creatItem(ItemRequest itemRequest,String id,boolean update);
+	Page<Item> getByPage(int page, int limit);
+	void creatItem(ItemRequest itemRequest,String itemId,boolean update);
 	void deleteItem(String id);
+	void setImage(String thumbnailUrl,Set<String> gallery, String itemId,boolean update);
+	void setCatagory(List<Integer> categories, String id);
+	List<String> gatherItem(String  urlKey,String category ,int page,int limit);
 }

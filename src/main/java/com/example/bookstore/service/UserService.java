@@ -3,6 +3,7 @@ package com.example.bookstore.service;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.bookstore.configuration.AppException;
 import com.example.bookstore.configuration.BaseRole;
 import com.example.bookstore.configuration.ErrorCode;
-import com.example.bookstore.dto.AuthenicationRequest;
+import com.example.bookstore.dto.PasswordResetRequest;
 import com.example.bookstore.dto.UserRequest;
 import com.example.bookstore.entity.Role;
 import com.example.bookstore.entity.User;
@@ -43,36 +44,41 @@ public class UserService implements IUserService{
 		user=userRepository.save(user);
 		
 	}
-	@Transactional
+	
+	@Value("${spring.admin.id}")
+	private String id;
+	
 	@Override
 	public void creatAdmin() {
-		if(!userRepository.existsByFullName("admin")) {
+		if(!userRepository.existsAsAdmin(BaseRole.ROLE_ADMIN.name())) {
 			Role role=roleRepository.findByAuthorization(BaseRole.ROLE_ADMIN.name());
 			User admin=User.builder()
-			.fullName("admin")
-			.password(passwordEncoder.encode("admin"))
-			.email("admin@gmail.com")
-			.sdt("0123456789")
-//			)
-			.roles(List.of(role))
-			.build(); 
-			userRepository.save(admin);
+					.id(id)
+					.fullName("admin")
+					.password(passwordEncoder.encode("admin"))
+					.email("admin@gmail.com")
+					.phoneNumber("0123456789")
+		//			)
+					.roles(List.of(role))
+					.build(); 
+			System.out.println(admin.getId());
+			userRepository.save(admin); 
 		};
 	}
 	@Override
 	@Transactional
-	public void resetByKey(AuthenicationRequest authenicationRequest,boolean logoutAll) {
+	public void resetByKey(PasswordResetRequest passwordResetRequest,boolean logoutAll) {
 		// TODO Auto-generated method stub
-		User user=findUserByEmail(authenicationRequest.getIdentifier());
-		user.setPassword(passwordEncoder.encode(authenicationRequest.getPassword()));
+		User user=findUserByEmail(passwordResetRequest.getEmail());
+		user.setPassword(passwordEncoder.encode(passwordResetRequest.getPassword()));
 		if(logoutAll) user.setVersion(user.getVersion()+1);
 		userRepository.save(user);
 		
 	}
 	
 	@Override
-	public User findUser(String identifier) {
-		User user=userRepository.findByEmailOrSdt(identifier,identifier).orElseThrow(()-> new AppException(ErrorCode.USER_NOT_EXISTED));
+	public User findUser(String emailOrPhoneNumber) {
+		User user=userRepository.findByEmailOrPhoneNumber(emailOrPhoneNumber,emailOrPhoneNumber).orElseThrow(()-> new AppException(ErrorCode.USER_NOT_EXISTED));
 		if(user.getVersion()==-1) throw new AppException(ErrorCode.USER_NOT_EXISTED);
 		return user;
 	}

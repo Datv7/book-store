@@ -12,6 +12,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -44,10 +45,10 @@ public class Item  {
 	@Column(name = "author",nullable=false, length=100)
 	private String author;
 
-	@Column(name = "title",nullable=false, length=255)
+	@Column(name = "title",nullable=false,unique = true, length=255)
 	private String title;
-
-	@Column(name = "description",nullable=false, length=600)
+	@Lob
+	@Column(name = "description",nullable=false, length=1000)
 	private String description;
 	
 	@Column(name = "coverType", length=50)
@@ -56,23 +57,26 @@ public class Item  {
 	@Column(name = "translator", length=100)
 	private String translator;
 	
+	@Column(name = "manufacturer", length=100)
+	private String manufacturer;
+	
 	@Column(name = "price",nullable=false)
 	private int price;
 	
 	@Column(name = "width",nullable=false)
-	private int width;
+	private double width;
 	
 	@Column(name = "height",nullable=false)
-	private int height;
+	private double height;
 	
 	@Column(name = "page",nullable=false)
 	private int page;
 	
-	@Column(name = "publishDate",nullable=false)
+	@Column(name = "publishDate")
 	private Date publishDate;
 	
-	@Column(name = "quality",nullable=false)
-	private int quality;
+	@Column(name = "quantity",nullable=false)
+	private int quantity;
 	
 	@Column(name = "soldCount",nullable=false)
 	private int soldCount;

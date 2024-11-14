@@ -18,5 +18,5 @@ public class UserRequest {
 	@NotBlank(message = "INFOR_EMPTY")
 	private String password;
 	@NotBlank(message = "INFOR_EMPTY")
-	private String sdt;
+	private String phoneNumber;
 }

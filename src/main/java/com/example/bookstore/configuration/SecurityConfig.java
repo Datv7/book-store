@@ -33,20 +33,21 @@ public class SecurityConfig {
 	}
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-		String[] publicUrl={"/users/test","/auth/**","/swagger-ui/**","/v3/api-docs/**"};
+		String[] publicUrl={"/users/test","/**","/swagger-ui/**","/v3/api-docs/**"};
 		http.authorizeHttpRequests(configure-> configure
 //				.anyRequest().permitAll() //bỏ comment dòng này để tắt 
 				.requestMatchers("/users/cus").hasRole("CUSTOMER")
-				.requestMatchers("/users/admin").hasRole("ADMIN")
+				.requestMatchers("/users/admin","/items/**").hasRole("ADMIN")
 				
 				.requestMatchers("/auth/logout").authenticated()
 				.requestMatchers(publicUrl).permitAll()
 				);
 		
 		http.oauth2ResourceServer(oauth2->oauth2.jwt(jwtConfigurer->
-			jwtConfigurer.decoder(customJwtDecoder)
-			.jwtAuthenticationConverter(jwtAuthenticationConverter())
-			));
+				jwtConfigurer.decoder(customJwtDecoder)
+				.jwtAuthenticationConverter(jwtAuthenticationConverter())
+			)
+			.authenticationEntryPoint(new JwtAuthenticationEntryPoint()));
 		http.csrf(t->t.disable());
 		return http.build();
 	}

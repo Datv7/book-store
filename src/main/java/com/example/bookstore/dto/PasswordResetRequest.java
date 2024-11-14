@@ -4,14 +4,12 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-
 @Getter
 @Setter
 @Builder
-public class AuthenicationRequest {
-	
+public class PasswordResetRequest {
 	@NotBlank(message = "INFOR_EMPTY")
-	private String emailOrPhoneNumber ;
+	private String email ;
 	@NotBlank(message = "INFOR_EMPTY")
 	private String password;
 }

@@ -10,6 +10,7 @@ public enum ErrorCode {
     UNAUTHORIZED(1002, "You do not have permission", HttpStatus.FORBIDDEN),
     TOKEN_GENERATION_ERROR(1003, "Token generate fail", HttpStatus.INTERNAL_SERVER_ERROR),
     KEY_INVALID(1004, "Key invalid", HttpStatus.FORBIDDEN),
+    SERVICE_UNAVAILABLE(1005,"Service unavailable",HttpStatus.SERVICE_UNAVAILABLE),
     
     ROLE_EXISTED(1100, "Role existed", HttpStatus.BAD_REQUEST),
     ROLE_EMPTY(1101, "Role empty", HttpStatus.BAD_REQUEST),
@@ -22,6 +23,8 @@ public enum ErrorCode {
     
     INFOR_EMPTY(1106, "Field cannot be null or empty", HttpStatus.BAD_REQUEST),
     INFOR_INVALID(1107, "Field invalid", HttpStatus.BAD_REQUEST),
+    
+    CATEGORY_NOT_EXISTED(1108, "Category not existed", HttpStatus.NOT_FOUND),
 	
 
 	;

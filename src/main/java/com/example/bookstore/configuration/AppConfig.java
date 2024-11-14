@@ -12,6 +12,7 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.springframework.web.client.RestTemplate;
 
 import com.example.bookstore.entity.Role;
 import com.example.bookstore.repository.RoleRepository;
@@ -73,5 +74,8 @@ public class AppConfig {
 		return redisTemplate;
 	}
 	
-	
+	@Bean
+	public RestTemplate k() {
+		return new RestTemplate();
+	}
 }

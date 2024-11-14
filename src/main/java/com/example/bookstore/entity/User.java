@@ -46,8 +46,8 @@ public class User  {
 	@Column(name = "fullName",nullable=false, length=100)
 	private String fullName;
 
-	@Column(name = "sdt",nullable=false,unique = true, length=15)
-	private String sdt;
+	@Column(name = "phoneNumber",nullable=false,unique = true, length=15)
+	private String phoneNumber;
 
 	@Column(name="password",nullable=false,length = 100)
 	private String password;

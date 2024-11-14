@@ -5,10 +5,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.StringJoiner;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,7 +33,6 @@ import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSObject;
 import com.nimbusds.jose.Payload;
 import com.nimbusds.jose.crypto.MACSigner;
-import com.nimbusds.jose.shaded.gson.JsonObject;
 import com.nimbusds.jwt.JWTClaimsSet;
 
 import lombok.extern.slf4j.Slf4j;
@@ -69,7 +65,7 @@ public class AuthenicationService implements IAuthenicationService{
 	@Override
 	public String[] login(AuthenicationRequest authenicationRequest) {
 		// TODO Auto-generated method stub
-		User temp= iUserService.findUser(authenicationRequest.getIdentifier());
+		User temp= iUserService.findUser(authenicationRequest.getEmailOrPhoneNumber());
 		boolean passwordCorrect=passwordEncoder.matches(authenicationRequest.getPassword(), temp.getPassword());
 		if(!passwordCorrect) throw new AppException(ErrorCode.UNAUTHENTICATED);
 		
@@ -170,11 +166,9 @@ public class AuthenicationService implements IAuthenicationService{
 	@Override
 	public int register(UserRequest userRequest) {
 		if(
-			userRepository.existsByEmailOrSdt(userRequest.getEmail(), userRequest.getSdt())
+			userRepository.existsByEmailOrPhoneNumber(userRequest.getEmail(), userRequest.getPhoneNumber())
 			) throw new AppException(ErrorCode.USER_EXISTED);
-		int otp = ThreadLocalRandom.current().nextInt(100000, 1000000);
-		iNotification.sendOtp(otp, userRequest.getEmail());
 		
-		return otp;
+		return iNotification.sendOtp(userRequest.getEmail());
 	}
 }

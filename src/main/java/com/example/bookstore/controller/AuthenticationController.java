@@ -5,7 +5,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,10 +16,12 @@ import com.example.bookstore.configuration.AppException;
 import com.example.bookstore.configuration.ErrorCode;
 import com.example.bookstore.dto.ApiRespond;
 import com.example.bookstore.dto.AuthenicationRequest;
+import com.example.bookstore.dto.PasswordResetRequest;
 import com.example.bookstore.dto.UserRequest;
 import com.example.bookstore.dto.UserResponse;
 import com.example.bookstore.service.RedisService;
 import com.example.bookstore.service.Iservice.IAuthenicationService;
+import com.example.bookstore.service.Iservice.INotification;
 import com.example.bookstore.service.Iservice.IUserService;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -32,7 +33,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestController
-@RequestMapping("/auth")
+//@RequestMapping("/auth")
 @SecurityRequirement(name = "Bearer Authentication")
 public class AuthenticationController {
 	@Value("${jwt.expiration.refresh}")
@@ -41,13 +42,15 @@ public class AuthenticationController {
 	private int expirationOtp;
 	@Value("${expiration.reset_password}")
 	private int resetPasswordExpiration;
+	@Value("${expiration.user_pending}")
+	private int userPendingExpiration;
 	
 	@Autowired
 	private RedisService redisService;
 	
 	@Autowired
-	private PasswordEncoder passwordEncoder;
-
+	private INotification iNotification;
+	
 	@Autowired
 	private IUserService iUserService;
 	@Autowired
@@ -57,7 +60,7 @@ public class AuthenticationController {
 	public ApiRespond<String> register(@Valid @RequestBody UserRequest userRequest){
 		int otp=iAuthenicationService.register(userRequest);
 		
-		redisService.value.set("user:pending:"+userRequest.getEmail(), userRequest,expirationOtp,TimeUnit.SECONDS);	
+		redisService.value.set("user:pending:"+userRequest.getEmail(), userRequest,userPendingExpiration,TimeUnit.HOURS);	
 		redisService.value.set("otp:email:"+userRequest.getEmail(), otp, expirationOtp, TimeUnit.SECONDS);
 //	)
 		return ApiRespond.<String>builder().build();
@@ -151,19 +154,31 @@ public class AuthenticationController {
 	}
 	@PostMapping("/reset-password")
 	public ApiRespond<String> resetAsForgot(HttpServletRequest request,HttpServletResponse response,
-			@Valid @RequestBody AuthenicationRequest authenicationRequest,
+			@Valid @RequestBody PasswordResetRequest passwordResetRequest,
 			@NotBlank(message = "INFOR_EMPTY") @RequestParam(name ="token" ) String token,
 			@RequestParam(name ="logoutall" ) boolean logoutAll) {
 		if(
-			(redisService.value.get("token:email:"+authenicationRequest.getIdentifier()))
+			(redisService.value.get("token:email:"+passwordResetRequest.getEmail()))
 			.equals(token)){
-			iUserService.resetByKey(authenicationRequest,logoutAll);
-			redisService.template.delete("token:email:"+authenicationRequest.getIdentifier());
+			iUserService.resetByKey(passwordResetRequest,logoutAll);
+			redisService.template.delete("token:email:"+passwordResetRequest.getEmail());
 			return ApiRespond.<String>builder().build();
 		}
 		
 		throw new AppException(ErrorCode.KEY_INVALID);
 	}
-	
+	@PostMapping("/send-otp")
+	public ApiRespond<String> sendOtp( @RequestBody Map<String, Object> json){
+		String email=(String)json.get("email");
+		if(email==null||email.trim().isEmpty()) throw new AppException(ErrorCode.INFOR_EMPTY);
+		if(!redisService.template.hasKey("user:pending:"+email)) throw new AppException(ErrorCode.USER_NOT_EXISTED);
+		int otp=iNotification.sendOtp(email);
+		redisService.value.set("otp:email:"+email, otp, expirationOtp, TimeUnit.SECONDS);
+		redisService.template.expire("user:pending:"+email, userPendingExpiration, TimeUnit.HOURS);
+		
+		ApiRespond<String> result= ApiRespond.<String>builder()
+				.build();
+		return result;
+	}
 	
 }

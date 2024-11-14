@@ -35,12 +35,12 @@ public class Image  {
 
 	@Column(name = "url",nullable=false, length=255)
 	private String url;
-
+	@Builder.Default
 	@Column(name = "isMain",nullable=false)
-	private boolean isMain;
+	private boolean isMain=false;
 	
 	@ManyToOne
-	@JoinColumn(name="item_id", nullable=false)
+	@JoinColumn(name="item_id")
 	private Item item;
 
 
