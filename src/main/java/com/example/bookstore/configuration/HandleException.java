@@ -4,6 +4,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -32,16 +33,29 @@ public class HandleException {
 				.code(error.getCode())
 				.massage(error.getMassage())
 				.build();
-		log.info(apiRespond.getMassage());
+		log.info(e.getMessage());
 		return ResponseEntity.status(error.getHttpStatus()).body(apiRespond);
 	}
 	@ExceptionHandler(value = DataIntegrityViolationException.class)
 	public ResponseEntity<ApiRespond<String>> handleDataIntegrityViolationException(DataIntegrityViolationException e){
+		ErrorCode errorCode=ErrorCode.INFOR_INVALID;
 		ApiRespond<String> apiRespond=ApiRespond.<String>builder()
-				.code(400)
-				.massage(e.getMessage())
+				.code(errorCode.getCode())
+				.massage(errorCode.getMassage())
 				.build();
-		log.info(apiRespond.getMassage());
+		log.info(e.getMessage());
+		return ResponseEntity.badRequest().body(apiRespond);
+	}
+	@ExceptionHandler(value = MissingServletRequestParameterException.class)
+	public ResponseEntity<ApiRespond<String>> handleMissingServletRequestParameterException(MissingServletRequestParameterException e){
+		ErrorCode errorCode=ErrorCode.MISSING_REQUEST_PARAMETER;
+		String message=errorCode.getMassage().replaceFirst("{param}", e.getParameterName());
+		message=errorCode.getMassage().replaceFirst("{type}", e.getParameterType());
+		ApiRespond<String> apiRespond=ApiRespond.<String>builder()
+				.code(errorCode.getCode())
+				.massage(message)
+				.build();
+		log.info(e.getMessage());
 		return ResponseEntity.badRequest().body(apiRespond);
 	}
 }

@@ -13,4 +13,8 @@ import com.example.bookstore.entity.Category;
 public interface CategoryRepository extends JpaRepository<Category, Integer>{
 	@Query("select c from Category c")
 	List<CategoryResponse> getAll();
+//	@Query("select c from Category c where c.name in ?1")
+//	List<CategoryResponse> findAllByName(List<String> names);
+	@Query("select c from Category c where c.name=?1")
+	Category findByName(String name);
 }

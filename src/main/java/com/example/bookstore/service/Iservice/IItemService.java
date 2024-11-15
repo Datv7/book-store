@@ -15,5 +15,5 @@ public interface IItemService {
 	void deleteItem(String id);
 	void setImage(String thumbnailUrl,Set<String> gallery, String itemId,boolean update);
 	void setCatagory(List<Integer> categories, String id);
-	List<String> gatherItem(String  urlKey,String category ,int page,int limit);
+	List<String> gatherItem(String  urlKey,String category ,int page,int limit,boolean gatherReview);
 }

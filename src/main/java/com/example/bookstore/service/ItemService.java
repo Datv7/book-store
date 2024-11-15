@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -25,13 +26,16 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.example.bookstore.configuration.AppException;
 import com.example.bookstore.configuration.ErrorCode;
+import com.example.bookstore.dto.CategoryResponse;
 import com.example.bookstore.dto.ItemRequest;
 import com.example.bookstore.entity.Category;
 import com.example.bookstore.entity.Image;
 import com.example.bookstore.entity.Item;
 import com.example.bookstore.mapper.ItemMapper;
+import com.example.bookstore.repository.CategoryRepository;
 import com.example.bookstore.repository.ImageRepository;
 import com.example.bookstore.repository.ItemRepository;
+import com.example.bookstore.service.Iservice.ICategoryService;
 import com.example.bookstore.service.Iservice.IItemService;
 import com.fasterxml.jackson.databind.JsonNode;
 @Service
@@ -45,6 +49,8 @@ public class ItemService implements IItemService{
 	private ImageRepository imageRepository;
 	@Autowired
 	private RestTemplate restTemplate;
+	@Autowired
+	private CategoryRepository categoryRepository;
 	
 	
 	@Override
@@ -118,12 +124,13 @@ public class ItemService implements IItemService{
 		
 	}
 
-
+	@Transactional
 	@Override
-	public List<String> gatherItem(String urlKey, String category, int page, int limit) {
+	public List<String> gatherItem(String urlKey, String category, int page, int limit,boolean gatherReview) {
 		// TODO Auto-generated method stub
-		List<String> result=new ArrayList<String>();
 		
+		List<String> result=new ArrayList<String>();
+//		
 		String url="https://tiki.vn/api/personalish/v1/blocks/listings";
 		UriComponentsBuilder uribuild=UriComponentsBuilder.fromHttpUrl(url);
 		uribuild.queryParam("urlKey", urlKey);
@@ -161,95 +168,113 @@ public class ItemService implements IItemService{
                     System.out.println("succeed");
                     JsonNode json2=responseEntity2.getBody();
                     
-        			String title=json2.get("name").asText();
-        			itemRequest.setTitle(title);
-        			
-        			if(itemRepository.existsByTitle(title)) continue;
-        			
-        			int price=Integer.parseInt( json2.get("original_price").asText());
-        			itemRequest.setPrice(price);
-        			
-        			String tempDescription=json2.get("description").asText();
-        			int y=tempDescription.lastIndexOf("<p>");
-        			String description=tempDescription.substring(0, y);
-        			itemRequest.setDescription(description);
-        			
-        			Set<String> gallery= new HashSet<String>();
-        			for(JsonNode image: json2.get("images")) {
-        				gallery.add( image.get("base_url").asText());
-        			}
-        			
-        			itemRequest.setGallery(gallery);
-        			String thumbnailUrl=json2.get("thumbnail_url").asText().replaceFirst("/cache/[^/]+/", "/");
-        			itemRequest.setThumbnailUrl(thumbnailUrl);
-        			System.out.println(thumbnailUrl);
-        			String authors="";
-        			int ii=0;
-        			for(JsonNode author: json2.get("authors")) {
-        				if(ii>0) authors=authors + ", ";
-        				authors=authors+author.get("name").asText();
-        				ii++;
-        			}
-        			itemRequest.setAuthor(authors);
-        			
-        			String coverType=null;
-        			String translator=null;
-        			String manufacturer=null;
-        			double width=0;
-        			double height=0;
-        			int page1=0;
-        			
-        			Date publishDate=null;
-        			for(JsonNode specification: json2.get("specifications")) {
-        				for(JsonNode attribute: specification.get("attributes")) {
-        					String attributeCode=attribute.get("code").asText();
-        					String value=attribute.get("value").asText();
-        					if(attributeCode.equals("publication_date")) {
-        						String date = value;
-        				        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        				        try {
-        				            publishDate = formatter.parse(date);
-        				        } catch (ParseException e) {
-        				            System.out.println("Error parsing date: " + e.getMessage());
-        				        }
-        				        itemRequest.setPublishDate(publishDate);        					
-        				    }
-        					else if(attributeCode.equals("dimensions")) {
-        						String dimension=(value.replaceAll("<p>|</p>|cm", "")).replaceAll(",", ".");
-        						String [] parts=dimension.split("x");
-        						try {
-        							width=Double.parseDouble(parts[0].trim());
-            						height=Double.parseDouble(parts[1].trim());
-								} catch (NumberFormatException e) {
-									// TODO: handle exception
-									continue;
-								}
-        						
-        						itemRequest.setWidth(width);
-        						itemRequest.setHeight(height);
-        					}
-        					else if(attributeCode.equals("dich_gia")) {
-        						translator=value;
-        						itemRequest.setTranslator(translator);
-        					}
-        					else if(attributeCode.equals("book_cover")) {
-        						coverType=value;
-        						itemRequest.setCoverType(coverType);
-        					}
-        					else if(attributeCode.equals("number_of_page")) {
-        						page1=Integer.parseInt( value);
-        						itemRequest.setPage(page1);        						
-        					}
-        					else if( attributeCode.equals("manufacturer")){
-        						manufacturer=value;
-        						itemRequest.setManufacturer(manufacturer);        						
-        					}
-        					
+                    try {
+                    	String title=json2.get("name").asText();
+            			itemRequest.setTitle(title);
+            			
+            			if(itemRepository.existsByTitle(title)) continue;
+            			
+            			int price=Integer.parseInt( json2.get("original_price").asText());
+            			itemRequest.setPrice(price);
+            			
+            			String tempDescription=json2.get("description").asText();
+            			int y=tempDescription.lastIndexOf("<p>");
+            			String description=tempDescription.substring(0, y);
+            			itemRequest.setDescription(description);
+            			
+            			Set<String> gallery= new HashSet<String>();
+            			for(JsonNode image: json2.get("images")) {
+            				gallery.add( image.get("base_url").asText());
             			}
-        			}
+            			
+            			itemRequest.setGallery(gallery);
+            			String thumbnailUrl=json2.get("thumbnail_url").asText().replaceFirst("/cache/[^/]+/", "/");
+            			itemRequest.setThumbnailUrl(thumbnailUrl);
+            			System.out.println(thumbnailUrl);
+            			String authors="";
+            			int ii=0;
+            			if(json2.get("authors")==null) continue;
+            			for(JsonNode author: json2.get("authors")) {
+            				if(ii>0) authors=authors + ", ";
+            				authors=authors+author.get("name").asText();
+            				ii++;
+            			}
+            			itemRequest.setAuthor(authors);
+            			
+            			String coverType=null;
+            			String translator=null;
+            			String manufacturer=null;
+            			double width=0;
+            			double height=0;
+            			int page1=0;
+            			
+            			Date publishDate=null;
+            			for(JsonNode specification: json2.get("specifications")) {
+            				for(JsonNode attribute: specification.get("attributes")) {
+            					String attributeCode=attribute.get("code").asText();
+            					String value=attribute.get("value").asText();
+            					if(attributeCode.equals("publication_date")) {
+            						String date = value;
+            				        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            				        try {
+            				            publishDate = formatter.parse(date);
+            				        } catch (ParseException e) {
+            				            System.out.println("Error parsing date: " + e.getMessage());
+            				        }
+            				        itemRequest.setPublishDate(publishDate);        					
+            				    }
+            					else if(attributeCode.equals("dimensions")) {
+            						String dimension=(value.replaceAll("<p>|</p>|cm", "")).replaceAll(",", ".");
+            						String [] parts=dimension.split("x");
+            						try {
+            							width=Double.parseDouble(parts[0].trim());
+                						height=Double.parseDouble(parts[1].trim());
+    								} catch (NumberFormatException e) {
+    									// TODO: handle exception
+    									continue;
+    								}
+            						
+            						itemRequest.setWidth(width);
+            						itemRequest.setHeight(height);
+            					}
+            					else if(attributeCode.equals("dich_gia")) {
+            						translator=value;
+            						itemRequest.setTranslator(translator);
+            					}
+            					else if(attributeCode.equals("book_cover")) {
+            						coverType=value;
+            						itemRequest.setCoverType(coverType);
+            					}
+            					else if(attributeCode.equals("number_of_page")) {
+            						page1=Integer.parseInt( value);
+            						itemRequest.setPage(page1);        						
+            					}
+            					else if( attributeCode.equals("manufacturer")){
+            						manufacturer=value;
+            						itemRequest.setManufacturer(manufacturer);        						
+            					}
+            					
+                			}
+            			}
+            			
+            			int soldCount=Integer.parseInt( json2.get("quantity_sold").get("value").asText());
+            			itemRequest.setSoldCount(soldCount);
+            			String cateName=json2.get("categories").get("name").asText();
+            			Category categoryResponse=categoryRepository.findByName(cateName);
+            			
+            			if(categoryResponse==null) {
+            				System.out.println("category not existed");
+            				continue;
+            			}
+            			itemRequest.setCategories(List.of(categoryResponse.getId()));
+            			
+                    }catch (Exception e) {
+                    	System.out.println("-----");
+                    	System.out.println(e.getMessage());
+                    	continue;
+                    }
         			
-        			int soldCount=Integer.parseInt( json2.get("quantity_sold").get("value").asText());
-        			itemRequest.setSoldCount(soldCount);
+        			
         			try {
         				creatItem(itemRequest, null, false);
         				result.add(itemRequest.getTitle());   

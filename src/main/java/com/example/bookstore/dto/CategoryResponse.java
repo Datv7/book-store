@@ -12,6 +12,6 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CategoryResponse {
-	private String id;
+	private int id;
 	private String name;
 }

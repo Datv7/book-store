@@ -34,7 +34,8 @@ public class ItemController {
 	@GetMapping("")
 	public ApiRespond<Page<Item>> getByPage(
 			@RequestParam(name = "page",defaultValue = "1") int page,
-			@RequestParam(name = "limit",defaultValue = "10") int limit){
+			@RequestParam(name = "limit",defaultValue = "10") int limit
+			){
 		
 		ApiRespond<Page<Item>> result= ApiRespond.<Page<Item>>builder()
 				.results(iItemService.getByPage(page-1, limit))
@@ -67,9 +68,12 @@ public class ItemController {
 			@RequestParam String  urlKey,
 			@RequestParam String category , 
 			@RequestParam(defaultValue = "1") int page, 
-			@RequestParam(defaultValue = "20") int limit){
+			@RequestParam(defaultValue = "20") int limit,
+			@RequestParam(name = "categories",required = false) List<String> targetCategory,
+			@RequestParam(name = "gatherReview",required = false,defaultValue = "false") boolean gatherReview
+			){
 		
-		ApiRespond<List<String>> result=ApiRespond.<List<String>>builder().results(iItemService.gatherItem(urlKey, category, page, limit)).build();
+		ApiRespond<List<String>> result=ApiRespond.<List<String>>builder().results(iItemService.gatherItem(urlKey, category, page, limit,gatherReview)).build();
 		return result;
 	}
 }

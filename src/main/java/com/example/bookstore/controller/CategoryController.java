@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.bookstore.configuration.AppException;
@@ -48,5 +49,13 @@ public class CategoryController {
 		return ApiRespond.<List<CategoryResponse>>builder()
 				.results(categoryService.getAll())
 				.build();
+	}
+	@GetMapping("/gather-category")
+	public ApiRespond<List<String>> gatherCategory(@RequestParam int  id){
+		
+		ApiRespond<List<String>> result=ApiRespond.<List<String>>builder()
+				.results(categoryService.gatherCategory(id))
+				.build();
+		return result;
 	}
 }
