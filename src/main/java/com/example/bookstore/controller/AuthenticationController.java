@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -16,6 +15,7 @@ import com.example.bookstore.configuration.AppException;
 import com.example.bookstore.configuration.ErrorCode;
 import com.example.bookstore.dto.ApiRespond;
 import com.example.bookstore.dto.AuthenicationRequest;
+import com.example.bookstore.dto.EmailOtpRequest;
 import com.example.bookstore.dto.PasswordResetRequest;
 import com.example.bookstore.dto.UserRequest;
 import com.example.bookstore.dto.UserResponse;
@@ -65,16 +65,14 @@ public class AuthenticationController {
 //	)
 		return ApiRespond.<String>builder().build();
 	}
-	@GetMapping("/verify-otp")
-	public ApiRespond<String> verifyOtp(
-			@RequestParam(name = "otp") int otp,
-			@NotBlank(message = "INFOR_EMPTY") @RequestParam(name = "email") String email){
+	@PostMapping("/verify-otp")
+	public ApiRespond<String> verifyOtp(@RequestBody @Valid EmailOtpRequest emailOtpRequest){
 		
-		if( ((int)redisService.value.get("otp:email:"+email)) ==otp) {
-			UserRequest userRequest=(UserRequest)redisService.value.get("user:pending:"+email);
+		if( ((int)redisService.value.get("otp:email:"+emailOtpRequest.getEmail())) ==emailOtpRequest.getOtp()) {
+			UserRequest userRequest=(UserRequest)redisService.value.get("user:pending:"+emailOtpRequest.getEmail());
 			iUserService.creatUser(userRequest);
-			redisService.template.delete("otp:email:"+email);
-			redisService.template.delete("user:pending:"+email);
+			redisService.template.delete("otp:email:"+emailOtpRequest.getEmail());
+			redisService.template.delete("user:pending:"+emailOtpRequest.getEmail());
 			return ApiRespond.<String>builder().build();
 		}
 		throw new AppException(ErrorCode.KEY_INVALID);

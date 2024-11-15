@@ -20,6 +20,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -31,12 +32,18 @@ import com.example.bookstore.dto.ItemRequest;
 import com.example.bookstore.entity.Category;
 import com.example.bookstore.entity.Image;
 import com.example.bookstore.entity.Item;
+import com.example.bookstore.entity.Review;
+import com.example.bookstore.entity.ReviewPK;
+import com.example.bookstore.entity.User;
 import com.example.bookstore.mapper.ItemMapper;
 import com.example.bookstore.repository.CategoryRepository;
 import com.example.bookstore.repository.ImageRepository;
 import com.example.bookstore.repository.ItemRepository;
+import com.example.bookstore.repository.ReviewRepository;
+import com.example.bookstore.repository.UserRepository;
 import com.example.bookstore.service.Iservice.ICategoryService;
 import com.example.bookstore.service.Iservice.IItemService;
+import com.example.bookstore.service.Iservice.IUserService;
 import com.fasterxml.jackson.databind.JsonNode;
 @Service
 public class ItemService implements IItemService{
@@ -51,6 +58,12 @@ public class ItemService implements IItemService{
 	private RestTemplate restTemplate;
 	@Autowired
 	private CategoryRepository categoryRepository;
+	@Autowired
+	private IUserService iUserService;
+	@Autowired
+	private UserRepository userRepository;
+	@Autowired
+	private ReviewRepository reviewRepository;
 	
 	
 	@Override
@@ -60,15 +73,16 @@ public class ItemService implements IItemService{
 		return itemRepository.findAll(pageable);
 	}
 
-	@Transactional
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	@Override
-	public void creatItem(ItemRequest itemRequest,String itemId, boolean update) {
+	public Item creatItem(ItemRequest itemRequest,String itemId, boolean update) {
 		// TODO Auto-generated method stub
 		Item item=itemMapper.toItem(itemRequest);
 		if(update) item.setId(itemId);
-		item=itemRepository.save(item);
-		setImage(itemRequest.getThumbnailUrl(),itemRequest.getGallery(), item.getId(), update);
-		setCatagory(itemRequest.getCategories(), item.getId());
+		Item temp=itemRepository.save(item);
+		setImage(itemRequest.getThumbnailUrl(),itemRequest.getGallery(), temp.getId(), update);
+		setCatagory(itemRequest.getCategories(), temp.getId());
+		return temp;
 	}
 	
 	
@@ -108,14 +122,18 @@ public class ItemService implements IItemService{
 		imageRepository.setMain(thumbnailUrl, itemId);
 		
 	}
-	@Transactional
+	
 	@Override
+	@Transactional
 	public void setCatagory(List<Integer> categories, String id) {
 		if(categories==null||categories.isEmpty()) return;
-		Item item=getItem(id);
+		System.out.println(id+"----iddddd");
+		Item item=itemRepository.getItemWithCateById(id).orElseThrow(() ->  new AppException(ErrorCode.ITEM_NOT_EXISTED));
+		System.out.println(id+"----iddddd");
 		item.getCategories().size();
 		item.getCategories().clear();
 		categories.forEach(c->{
+			if(!categoryRepository.existsById(c)) throw new AppException(ErrorCode.CATEGORY_NOT_EXISTED);
 			item.getCategories().add(Category.builder().id(c).build());
 			
 		});
@@ -124,7 +142,7 @@ public class ItemService implements IItemService{
 		
 	}
 
-	@Transactional
+//	@Transactional(noRollbackFor = NullPointerException.class)
 	@Override
 	public List<String> gatherItem(String urlKey, String category, int page, int limit,boolean gatherReview) {
 		// TODO Auto-generated method stub
@@ -168,11 +186,16 @@ public class ItemService implements IItemService{
                     System.out.println("succeed");
                     JsonNode json2=responseEntity2.getBody();
                     
+                    String currentSeller="";
+                    
                     try {
                     	String title=json2.get("name").asText();
             			itemRequest.setTitle(title);
             			
-            			if(itemRepository.existsByTitle(title)) continue;
+            			if(itemRepository.existsByTitle(title)) {
+            				System.out.println("item exxisted by title");
+            				continue;
+            			}
             			
             			int price=Integer.parseInt( json2.get("original_price").asText());
             			itemRequest.setPrice(price);
@@ -220,6 +243,7 @@ public class ItemService implements IItemService{
             				            publishDate = formatter.parse(date);
             				        } catch (ParseException e) {
             				            System.out.println("Error parsing date: " + e.getMessage());
+            				            continue;
             				        }
             				        itemRequest.setPublishDate(publishDate);        					
             				    }
@@ -231,6 +255,7 @@ public class ItemService implements IItemService{
                 						height=Double.parseDouble(parts[1].trim());
     								} catch (NumberFormatException e) {
     									// TODO: handle exception
+    									System.out.println("demension null");
     									continue;
     								}
             						
@@ -262,10 +287,17 @@ public class ItemService implements IItemService{
             			String cateName=json2.get("categories").get("name").asText();
             			Category categoryResponse=categoryRepository.findByName(cateName);
             			
+            			currentSeller=json2.get("current_seller").get("id").asText();
+            			if(currentSeller.isEmpty()) {
+            				gatherReview=false;
+            				System.out.println("current_seller is null");
+            			}
+            			
             			if(categoryResponse==null) {
             				System.out.println("category not existed");
             				continue;
             			}
+            			System.out.println(categoryResponse.getName()+"----------");
             			itemRequest.setCategories(List.of(categoryResponse.getId()));
             			
                     }catch (Exception e) {
@@ -274,15 +306,23 @@ public class ItemService implements IItemService{
                     	continue;
                     }
         			
-        			
+        			String itemIdDb="";
         			try {
-        				creatItem(itemRequest, null, false);
-        				result.add(itemRequest.getTitle());   
+        				
+        				Item item=creatItem(itemRequest, null, false);	
+        				itemIdDb=item.getId();
+        				
         			}catch (DataIntegrityViolationException e) {
         				System.out.println(e.getMessage());
+        				continue;
         				
         			}
-        			
+        			String message="(NotReview)";
+        			if(gatherReview) {
+    					message=gatherReview(itemIdDb,id, currentSeller) ? "(Review)" :message;
+    				}
+    				
+					result.add(message+itemRequest.getTitle());
         			     			
         			
         		}else {
@@ -300,4 +340,66 @@ public class ItemService implements IItemService{
 		return result;
 	}
 
+//	@Transactional(noRollbackFor = NullPointerException.class)
+	private boolean gatherReview(String itemIdDb,String id,String sellerId) {
+		String url="https://tiki.vn/api/v2/reviews";
+		UriComponentsBuilder uribuild=UriComponentsBuilder.fromHttpUrl(url);
+		uribuild.queryParam("product_id", id);
+		uribuild.queryParam("seller_id", sellerId);
+		HttpHeaders headers=new HttpHeaders();
+		HttpEntity<Void> httpEntity=new HttpEntity<>(headers);
+		ResponseEntity<JsonNode> responseEntity= restTemplate.exchange(uribuild.toUriString(), HttpMethod.GET, httpEntity, JsonNode.class);
+		
+		if (responseEntity.getStatusCode().equals(HttpStatus.OK)) {
+            System.out.println("thanh cong (review)");
+            JsonNode json=responseEntity.getBody();
+            if(!json.get("data").isArray()) return false;
+         
+            for(JsonNode data:json.get("data")) {
+            	try {
+            		String content=data.get("content").asText().trim().isEmpty()? data.get("title").asText()  : data.get("content").asText();
+                	int rate=data.get("rating").asInt(0);
+                	JsonNode dataUser= data.get("created_by");
+                	
+                	Date date=new Date();
+                	String creatAt=dataUser.get("created_time").asText();
+    		        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    		        try {
+    		            date = formatter.parse(creatAt);
+    		        } catch (ParseException e) {
+    		            System.out.println("Error parsing date: ");
+    		            continue;
+    		        }
+                	System.out.println("xxxx");
+                	String fullname=dataUser.get("full_name").asText();
+                	String urlAvatar=dataUser.get("avatar_url").asText();
+                	User user=iUserService.creatUser( iUserService.randomUser());
+                	user.setFullName(fullname);
+                	user.setUrlAvatar(urlAvatar);
+                	userRepository.save(user);
+                	System.out.println("11111");
+                	Review review=Review.builder()
+                			.id(new ReviewPK(user.getId(), itemIdDb))
+                			.content(content)
+                			.rate(rate)
+                			.createAt(date)
+                			.item(Item.builder().id(itemIdDb).build())
+                			.user(User.builder().id(user.getId()).build())
+                			.build();
+                	reviewRepository.save(review);
+                	System.out.println("22222");
+            	} catch(NullPointerException e) {
+            		System.out.println("--- fail to get review");
+            		System.out.println(e.getMessage());
+            		continue;
+            	}
+            	
+            }
+		}
+		else {
+			System.out.println("thatbai (review)");
+			return false;
+		}
+		return true;
+	}
 }

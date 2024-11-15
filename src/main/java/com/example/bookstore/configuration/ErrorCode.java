@@ -11,7 +11,7 @@ public enum ErrorCode {
     TOKEN_GENERATION_ERROR(1003, "Token generate fail", HttpStatus.INTERNAL_SERVER_ERROR),
     KEY_INVALID(1004, "Key invalid", HttpStatus.FORBIDDEN),
     SERVICE_UNAVAILABLE(1005,"Service unavailable",HttpStatus.SERVICE_UNAVAILABLE),
-    MISSING_REQUEST_PARAMETER(1006,"Required request parameter {param} for method parameter type {type} is not present",HttpStatus.BAD_REQUEST),
+    MISSING_REQUEST_PARAMETER(1006,"Required request parameter _param_ for method parameter type _type_ is not present",HttpStatus.BAD_REQUEST),
     
     
     ROLE_EXISTED(1100, "Role existed", HttpStatus.BAD_REQUEST),

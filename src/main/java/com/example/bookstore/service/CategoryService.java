@@ -12,6 +12,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -38,6 +39,7 @@ public class CategoryService implements ICategoryService{
 		
 	}
 
+	@Transactional
 	@Override
 	public void updateCategory(String name, int id) {
 		// TODO Auto-generated method stub
@@ -52,6 +54,7 @@ public class CategoryService implements ICategoryService{
 		return categoryRepository.getAll();
 	}
 
+	@Transactional
 	@Override
 	public List<String> gatherCategory(int id) {
 		// TODO Auto-generated method stub

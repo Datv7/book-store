@@ -34,10 +34,15 @@ public class SecurityConfig {
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		String[] publicUrl={"/users/test","/**","/swagger-ui/**","/v3/api-docs/**"};
+		
+		String[] admin= {"/users/admin","/items/**","/categories/**","/users/generate"};
+		
+		String[] customer= {"/users/cus"};
+		
 		http.authorizeHttpRequests(configure-> configure
 //				.anyRequest().permitAll() //bỏ comment dòng này để tắt 
-				.requestMatchers("/users/cus").hasRole("CUSTOMER")
-				.requestMatchers("/users/admin","/items/**").hasRole("ADMIN")
+				.requestMatchers(customer).hasRole("CUSTOMER")
+				.requestMatchers(admin).hasRole("ADMIN")
 				
 				.requestMatchers("/auth/logout").authenticated()
 				.requestMatchers(publicUrl).permitAll()

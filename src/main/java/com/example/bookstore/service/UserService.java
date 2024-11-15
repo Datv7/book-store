@@ -1,6 +1,8 @@
 package com.example.bookstore.service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,7 +34,7 @@ public class UserService implements IUserService{
 	private PasswordEncoder passwordEncoder;
 	@Override
 	@Transactional
-	public void creatUser(UserRequest userRequest) {
+	public User creatUser(UserRequest userRequest) {
 		// TODO Auto-generated method stub
 		
 		User user=userMapper.toUser(userRequest);
@@ -41,7 +43,7 @@ public class UserService implements IUserService{
 		
 		user.setRoles(List.of(role));
 		
-		user=userRepository.save(user);
+		return userRepository.save(user);
 		
 	}
 	
@@ -88,5 +90,36 @@ public class UserService implements IUserService{
 		if(user.getVersion()==-1) throw new AppException(ErrorCode.USER_NOT_EXISTED);
 		return user;
 	}
+	@Transactional
+	@Override
+	public List<String> genUser(int quantity) {
+		// TODO Auto-generated method stub
+		List<String> result=new ArrayList<String>();
+		for(int i=1;i<=quantity;i++) {
+			
+			UserRequest userRequest=randomUser();
+			creatUser(userRequest);
+			
+			result.add(userRequest.getEmail());
+		}
+		return result;
+	}
+	public UserRequest randomUser() {
+		String email="";
+		int random=0;
+		do {
+			random = ThreadLocalRandom.current().nextInt(100000, 1000000);
+			email="ctm"+random+"@gmail.com";
+		}while(userRepository.existsByEmailOrPhoneNumber(email,String.valueOf(random)));
+		UserRequest userRequest=UserRequest.builder()
+				.email(email)
+				.phoneNumber(String.valueOf(random))
+				.password(String.valueOf(random))
+				.fullName("ctm"+random)
+				.build();
+		return userRequest;
+	}
+	
+	
 
 }

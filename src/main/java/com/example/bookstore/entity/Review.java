@@ -30,7 +30,7 @@ import lombok.Setter;
 public class Review  {
 
 	@EmbeddedId
-	private ReviewPK id;
+	private ReviewPK id=new ReviewPK();
 
 	@Column(name = "content",nullable=false,length = 500)
 	private String content;
@@ -43,12 +43,12 @@ public class Review  {
 
 	@MapsId("itemId")
 	@ManyToOne
-	@JoinColumn(name="item_id", nullable=false)
+	@JoinColumn(name="item_id",referencedColumnName = "id")
 	private Item item;
 
 	@MapsId("userId")
 	@ManyToOne
-	@JoinColumn(name="user_id", nullable=false)
+	@JoinColumn(name="user_id",referencedColumnName = "id")
 	private User user;
 
 

@@ -12,6 +12,7 @@ public interface UserRepository extends JpaRepository<User, String>{
 	@Query("select count(r)>0 from User u join u.roles r where r.authorization=?1")
 	boolean existsAsAdmin(String role);
 	boolean existsByEmailOrPhoneNumber(String email,String phoneNumber);
+	boolean existsByEmail(String email);
 	Optional<User> findByEmailOrPhoneNumber(String email,String phoneNumber);
 	Optional<User> findByEmail(String email);
 }

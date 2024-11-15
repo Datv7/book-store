@@ -1,7 +1,6 @@
 package com.example.bookstore.configuration;
 
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -49,11 +48,11 @@ public class HandleException {
 	@ExceptionHandler(value = MissingServletRequestParameterException.class)
 	public ResponseEntity<ApiRespond<String>> handleMissingServletRequestParameterException(MissingServletRequestParameterException e){
 		ErrorCode errorCode=ErrorCode.MISSING_REQUEST_PARAMETER;
-		String message=errorCode.getMassage().replaceFirst("{param}", e.getParameterName());
-		message=errorCode.getMassage().replaceFirst("{type}", e.getParameterType());
+		String message=errorCode.getMassage().replaceFirst("_param_", e.getParameterName());
+		message=errorCode.getMassage().replaceFirst("_type_", e.getParameterType());
 		ApiRespond<String> apiRespond=ApiRespond.<String>builder()
 				.code(errorCode.getCode())
-				.massage(message)
+				.massage("Required parameter is missing.")
 				.build();
 		log.info(e.getMessage());
 		return ResponseEntity.badRequest().body(apiRespond);
