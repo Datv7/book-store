@@ -21,6 +21,7 @@ import com.example.bookstore.configuration.ErrorCode;
 import com.example.bookstore.dto.CategoryResponse;
 import com.example.bookstore.entity.Category;
 import com.example.bookstore.repository.CategoryRepository;
+import com.example.bookstore.repository.ItemRepository;
 import com.example.bookstore.service.Iservice.ICategoryService;
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -28,6 +29,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 public class CategoryService implements ICategoryService{
 	@Autowired
 	private CategoryRepository categoryRepository;
+	@Autowired
+	private ItemRepository itemRepository;
 	
 	@Autowired
 	private RestTemplate restTemplate;
@@ -35,23 +38,34 @@ public class CategoryService implements ICategoryService{
 	@Override
 	public void createCategory(String name) {
 		// TODO Auto-generated method stub
-		categoryRepository.save(Category.builder().name(name).build());
+		categoryRepository.save(Category.builder()
+				.name(name)
+				.build());
 		
 	}
 
 	@Transactional
 	@Override
-	public void updateCategory(String name, int id) {
+	public void updateCategory(String name,boolean isDeleted, int id) {
 		// TODO Auto-generated method stub
 		Category category=categoryRepository.findById(id).orElseThrow(()-> new AppException(ErrorCode.CATEGORY_NOT_EXISTED));
 		category.setName(name);
+		boolean deleted=category.isDeleted();
+		
+		category.setDeleted(isDeleted);
 		categoryRepository.save(category);
+		if(isDeleted && !deleted) deleteCategory(id);
+		
 	}
 
 	@Override
 	public List<CategoryResponse> getAll() {
 		// TODO Auto-generated method stub
-		return categoryRepository.getAll();
+		List<Category> categories=categoryRepository.findAll();
+		
+		List<CategoryResponse> categoryResponses= categories.stream().map(c->
+					CategoryResponse.mapCategoryResponse(c)).collect(Collectors.toList());
+		return categoryResponses;
 	}
 
 	@Transactional
@@ -107,6 +121,18 @@ public class CategoryService implements ICategoryService{
         	}
 		}
 		
+	}
+
+	@Override
+	public void deleteCategory(int id) {
+		// TODO Auto-generated method stub
+
+		Category category=categoryRepository.findById(id).orElseThrow(()-> new AppException(ErrorCode.CATEGORY_NOT_EXISTED));
+		if(category.isDeleted()) return;
+		category.setDeleted(true);
+		categoryRepository.save(category);
+		
+		itemRepository.deleteByCateId(itemRepository.findIdByCateId(id));
 	}
 
 }

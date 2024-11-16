@@ -1,5 +1,6 @@
 package com.example.bookstore.entity;
 
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,9 +38,15 @@ public class Category  {
 
 	@Column(name = "name",nullable=false, length=100)
 	private String name;
+	
+	@Builder.Default
+	@Column(name = "isDeleted",nullable = false)
+	private boolean isDeleted=false;
+	
 	@Builder.Default
 	@ManyToMany(mappedBy = "categories")
 	private List<Item> items=new ArrayList<Item>();
 
+	
 
 }

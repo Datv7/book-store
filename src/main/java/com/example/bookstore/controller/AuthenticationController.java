@@ -80,12 +80,11 @@ public class AuthenticationController {
 	
 	@PostMapping("/login")
 	public ApiRespond<UserResponse> login(HttpServletResponse response,@Valid @RequestBody AuthenicationRequest authenicationRequest){
-		String[] token=iAuthenicationService.login(authenicationRequest);
-		UserResponse userResponse=new UserResponse(token[0],token[2]);
+		Object[] loginResponse=iAuthenicationService.login(authenicationRequest);
 		ApiRespond<UserResponse> result=ApiRespond.<UserResponse>builder()
-				.results(userResponse)
+				.results((UserResponse)loginResponse[0])
 				.build();
-		Cookie cookie=new Cookie("refreshToken", token[1]);
+		Cookie cookie=new Cookie("refreshToken", (String)loginResponse[1]);
 		cookie.setHttpOnly(true);
 		cookie.setMaxAge(refreshExpiration);
 		cookie.setPath("/");
@@ -113,7 +112,7 @@ public class AuthenticationController {
 		return ApiRespond.<String>builder().build();
 	}
 	@GetMapping("/refresh-token")
-	public ApiRespond<UserResponse> refresh(HttpServletRequest request,HttpServletResponse response){
+	public ApiRespond<String> refresh(HttpServletRequest request,HttpServletResponse response){
 		String refreshToken=null;
 		Cookie[] cookies= request.getCookies();
 		for(Cookie cookie:cookies) {
@@ -134,8 +133,8 @@ public class AuthenticationController {
 			cookie.setPath("/");
 			response.addCookie(cookie);
 		}
-		return ApiRespond.<UserResponse>builder()
-				.results(new UserResponse(token[0],null))
+		return ApiRespond.<String>builder()
+				.results(token[0])
 				.build();
 	}
 	@PostMapping("/forgot-password")

@@ -3,9 +3,11 @@ package com.example.bookstore.service;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.List;
 import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,12 +16,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.bookstore.configuration.AppException;
 import com.example.bookstore.configuration.CustomJwtDecoder;
 import com.example.bookstore.configuration.ErrorCode;
 import com.example.bookstore.dto.AuthenicationRequest;
 import com.example.bookstore.dto.UserRequest;
+import com.example.bookstore.dto.UserResponse;
 import com.example.bookstore.entity.LogoutToken;
 import com.example.bookstore.entity.User;
 import com.example.bookstore.repository.LogoutTokenRepository;
@@ -61,16 +65,30 @@ public class AuthenicationService implements IAuthenicationService{
 	private INotification iNotification;
 	@Autowired
 	private IUserService iUserService;
-	
+	@Transactional
 	@Override
-	public String[] login(AuthenicationRequest authenicationRequest) {
+	public Object[] login(AuthenicationRequest authenicationRequest) {
 		// TODO Auto-generated method stub
 		User temp= iUserService.findUser(authenicationRequest.getEmailOrPhoneNumber());
 		boolean passwordCorrect=passwordEncoder.matches(authenicationRequest.getPassword(), temp.getPassword());
 		if(!passwordCorrect) throw new AppException(ErrorCode.UNAUTHENTICATED);
 		
-		String[] token= {genToken(temp, accessExpiration),genToken(temp, refreshExpiration),temp.getFullName()};
-		return token;
+		
+		List<String> roles=temp.getRoles().stream().map(r->
+				r.getAuthorization().toLowerCase().replaceFirst("role_", ""))
+				.collect(Collectors.toList());
+		UserResponse userResponse= 
+				UserResponse.builder()
+							.accessToken(genToken(temp, accessExpiration))
+							.id(temp.getId())
+							.fullName(temp.getFullName())
+							.email(temp.getEmail())
+							.urlAvatar(temp.getUrlAvatar())
+							.roles(roles)
+							.build();
+		
+		Object[] result= {userResponse,genToken(temp, refreshExpiration)};
+		return result;
 	}
 	
 	public String genToken(User user,int expire) {

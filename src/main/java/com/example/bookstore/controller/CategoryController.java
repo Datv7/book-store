@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -40,14 +41,21 @@ public class CategoryController {
 	@PutMapping("/{id}")
 	public ApiRespond<String> updateCategory( @RequestBody Map<String, Object> json, @PathVariable(name = "id") int id){
 		String name=(String)json.get("name");
+		boolean isDeleted=(boolean) json.get("isDeleted");
 		if(name==null||name.trim().isEmpty()) throw new AppException(ErrorCode.INFOR_EMPTY);
-		categoryService.updateCategory(name, id);
+		categoryService.updateCategory(name,isDeleted, id);
 		return ApiRespond.<String>builder().build();
 	}
 	@GetMapping("")
 	public ApiRespond<List<CategoryResponse>> getAll(){
 		return ApiRespond.<List<CategoryResponse>>builder()
 				.results(categoryService.getAll())
+				.build();
+	}
+	@DeleteMapping("/{id}")
+	public ApiRespond<String> deleteCategory(@PathVariable(name = "id") int id){
+		categoryService.deleteCategory(id);
+		return ApiRespond.<String>builder()
 				.build();
 	}
 	@GetMapping("/gather-category")
