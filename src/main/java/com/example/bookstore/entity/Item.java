@@ -60,11 +60,8 @@ public class Item  {
 	@Column(name = "manufacturer", length=100)
 	private String manufacturer;
 	
-	@Column(name = "price",nullable=true)
+	@Column(name = "price",nullable=false)
 	private int price;
-	
-	@Column(name = "originalPrice",nullable=false)
-	private int originalPrice;
 	
 	@Column(name = "width",nullable=false)
 	private double width;

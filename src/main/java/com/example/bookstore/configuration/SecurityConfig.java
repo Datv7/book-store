@@ -39,12 +39,12 @@ public class SecurityConfig {
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		String[] publicUrl={"/users/test","/**","/swagger-ui/**","/v3/api-docs/**"};
 		
-		String[] admin= {"/users/admin","/items/**","/categories/**","/users/generate"};
+		String[] admin= {"/users/admin","/items/**","/categories/**","/users/**","/users/generate"};
 		
 		String[] customer= {"/users/cus"};
 		
 		http.authorizeHttpRequests(configure-> configure
-//				.anyRequest().permitAll() //bỏ comment dòng này để tắt 
+				.requestMatchers("/**").permitAll() //bỏ comment dòng này để tắt 
 				.requestMatchers(customer).hasRole("CUSTOMER")
 				.requestMatchers(admin).hasRole("ADMIN")
 				
@@ -75,6 +75,8 @@ public class SecurityConfig {
         configuration.setAllowCredentials(true); 
         configuration.addAllowedOrigin("http://localhost:5173"); 
         configuration.addAllowedOrigin("http://localhost:5174"); 
+
+        configuration.addAllowedOrigin("http://127.0.0.1:5500"); 
         configuration.addAllowedMethod("*");  
         configuration.addAllowedHeader("*");  
 

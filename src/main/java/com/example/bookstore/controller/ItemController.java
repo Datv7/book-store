@@ -16,7 +16,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.bookstore.dto.ApiRespond;
+import com.example.bookstore.dto.ItemInList;
 import com.example.bookstore.dto.ItemRequest;
+import com.example.bookstore.dto.PageCustom;
 import com.example.bookstore.entity.Item;
 import com.example.bookstore.service.Iservice.IItemService;
 
@@ -32,13 +34,13 @@ public class ItemController {
 	private IItemService iItemService;
 	
 	@GetMapping("")
-	public ApiRespond<Page<Item>> getByPage(
-			@RequestParam(name = "page",defaultValue = "1") int page,
-			@RequestParam(name = "limit",defaultValue = "10") int limit
+	public ApiRespond<PageCustom<ItemInList>> getAll(
+			@RequestParam(name = "page",defaultValue = "0") int page,
+			@RequestParam(name = "limit",defaultValue = "10") int size
 			){
 		
-		ApiRespond<Page<Item>> result= ApiRespond.<Page<Item>>builder()
-				.results(iItemService.getByPage(page-1, limit))
+		ApiRespond<PageCustom<ItemInList>> result= ApiRespond.<PageCustom<ItemInList>>builder()
+				.results(iItemService.getAll(page, size))
 				.build();
 		return result;
 	}

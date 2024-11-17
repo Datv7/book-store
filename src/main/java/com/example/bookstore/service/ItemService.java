@@ -28,7 +28,10 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.example.bookstore.configuration.AppException;
 import com.example.bookstore.configuration.ErrorCode;
 import com.example.bookstore.dto.CategoryResponse;
+import com.example.bookstore.dto.ItemInList;
 import com.example.bookstore.dto.ItemRequest;
+import com.example.bookstore.dto.PageCustom;
+import com.example.bookstore.dto.UserInList;
 import com.example.bookstore.entity.Category;
 import com.example.bookstore.entity.Image;
 import com.example.bookstore.entity.Item;
@@ -67,12 +70,24 @@ public class ItemService implements IItemService{
 	
 	
 	@Override
-	public Page<Item> getByPage(int page , int limit) {
+	public PageCustom<ItemInList> getAll(int page , int size) {
 		// TODO Auto-generated method stub
-		Pageable pageable=PageRequest.of(page, limit);
-		return itemRepository.findAll(pageable);
+		Pageable pageable=PageRequest.of(page, size);
+		Page<Item> page2= itemRepository.findAll(pageable);
+		List<ItemInList> itemInLists=new ArrayList<ItemInList>();
+		
+		for(Item i:page2.getContent()) {
+			ItemInList itemInList=itemMapper.toItemInList(i);
+			itemInLists.add(itemInList);
+		}
+		return PageCustom.<ItemInList>builder()
+				.totalPage(page2.getTotalPages())
+				.data(itemInLists)
+				.build();
 	}
 
+	
+	
 	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	@Override
 	public Item creatItem(ItemRequest itemRequest,String itemId, boolean update) {
@@ -397,9 +412,13 @@ public class ItemService implements IItemService{
             }
 		}
 		else {
-			System.out.println("thatbai (review)");
+			System.out.println("fail (review)");
 			return false;
 		}
 		return true;
 	}
+
+
+
+	
 }

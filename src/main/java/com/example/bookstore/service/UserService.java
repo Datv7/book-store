@@ -3,9 +3,13 @@ package com.example.bookstore.service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,7 +17,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.bookstore.configuration.AppException;
 import com.example.bookstore.configuration.BaseRole;
 import com.example.bookstore.configuration.ErrorCode;
+import com.example.bookstore.dto.AUpdateUserRequest;
+import com.example.bookstore.dto.PageCustom;
 import com.example.bookstore.dto.PasswordResetRequest;
+import com.example.bookstore.dto.UserInList;
 import com.example.bookstore.dto.UserRequest;
 import com.example.bookstore.entity.Role;
 import com.example.bookstore.entity.User;
@@ -118,6 +125,52 @@ public class UserService implements IUserService{
 				.fullName("ctm"+random)
 				.build();
 		return userRequest;
+	}
+	@Override
+	public void updateUserByAdmin(String id,AUpdateUserRequest aUpdateUserRequest) {
+		// TODO Auto-generated method stub
+		User temp=userRepository.findById(id).orElseThrow(()->new AppException(ErrorCode.USER_NOT_EXISTED));
+		temp.setVersion(aUpdateUserRequest.getVersion());
+		temp.getRoles().clear();
+		for(String role: aUpdateUserRequest.getRoles()) {
+			Role tempRole=roleRepository.findByAuthorization(role);
+			temp.getRoles().add(tempRole);
+		}
+		userRepository.save(temp);
+	}
+	@Override
+	public PageCustom<UserInList> getAll(int page, int size) {
+		// TODO Auto-generated method stub
+		Pageable pageable=PageRequest.of(page, size);
+		List<UserInList> userInLists=new ArrayList<UserInList>();
+		Page<User> page2=userRepository.findAll(pageable);
+		for (User u:page2.getContent()) {
+			List<String> roles=u.getRoles().stream().map(r->r.getAuthorization()).collect(Collectors.toList());
+			for(Role r:u.getRoles()) System.out.println(r.getAuthorization());
+			UserInList userInList=UserInList.builder()
+					.id(u.getId())
+					.fullName(u.getFullName())
+					.email(u.getEmail())
+					.phoneNumber(u.getPhoneNumber())
+					.version(u.getVersion())
+					.roles(roles)
+					.build();
+			userInLists.add(userInList);
+			
+		};
+
+		return PageCustom.<UserInList>builder()
+				.totalPage(page2.getTotalPages())
+				.data(userInLists)
+				.build();
+					
+	}
+	@Override
+	public void deleteUser(String id) {
+		// TODO Auto-generated method stub
+		User temp=userRepository.findById(id).orElseThrow(()->new AppException(ErrorCode.USER_NOT_EXISTED));
+		temp.setVersion(-1);
+		userRepository.save(temp);
 	}
 	
 	
