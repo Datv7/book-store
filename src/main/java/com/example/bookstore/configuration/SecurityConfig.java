@@ -48,9 +48,10 @@ public class SecurityConfig {
 				.requestMatchers(customer).hasRole("CUSTOMER")
 				.requestMatchers(admin).hasRole("ADMIN")
 				
-				.requestMatchers("/auth/logout").authenticated()
+				.requestMatchers("/signout").hasAnyRole("CUSTOMER","ADMIN")
 				.requestMatchers(publicUrl).permitAll()
 				);
+		 
 		
 		http.oauth2ResourceServer(oauth2->oauth2.jwt(jwtConfigurer->
 				jwtConfigurer.decoder(customJwtDecoder)

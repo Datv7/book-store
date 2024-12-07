@@ -20,7 +20,7 @@ public class HandleException {
 		ErrorCode error= e.getErrorCode();
 		ApiRespond<String> apiRespond=ApiRespond.<String>builder()
 				.code(error.getCode())
-				.massage(error.getMassage())
+				.massage(e.getMessage())
 				.build();
 		log.info(apiRespond.getMassage());
 		return ResponseEntity.status(error.getHttpStatus()).body(apiRespond);
@@ -56,5 +56,16 @@ public class HandleException {
 				.build();
 		log.info(e.getMessage());
 		return ResponseEntity.badRequest().body(apiRespond);
+	}
+	@ExceptionHandler(value = Exception.class)
+	public ResponseEntity<ApiRespond<String>> handleException(Exception e){
+		ErrorCode errorCode=ErrorCode.UNCATEGORIZED_EXCEPTION;
+		ApiRespond<String> apiRespond=ApiRespond.<String>builder()
+				.code(errorCode.getCode())
+				.massage(errorCode.getMassage())
+				.build();
+		log.info(apiRespond.getMassage());
+		e.printStackTrace();
+		return ResponseEntity.status(errorCode.getHttpStatus()).body(apiRespond);
 	}
 }

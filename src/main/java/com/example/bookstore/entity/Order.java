@@ -38,7 +38,15 @@ public class Order  {
 	@GeneratedValue(strategy = GenerationType.UUID)
 	@Column(name = "id",nullable=false, length=50)
 	private String id;
-
+	@Column(name = "code",nullable=false,unique = true)
+	private String code;
+	
+	@Column(name = "name",nullable=false, length=50)
+	private String name;
+	
+	@Column(name = "totalItem",nullable=false)
+	private int totalItem;
+	
 	@Column(name = "totalAmount",nullable=false)
 	private int totalAmount;
 	
@@ -68,4 +76,8 @@ public class Order  {
 	@OneToMany(mappedBy = "order")
 	private List<OrderStatus> status;
 
+	@OneToOne
+	@JoinColumn(name = "voucher_id")
+	private Voucher voucher;
+	
 }

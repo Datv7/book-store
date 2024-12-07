@@ -1,5 +1,6 @@
 package com.example.bookstore.controller;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -24,41 +25,50 @@ import com.example.bookstore.service.Iservice.ICategoryService;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
-@RequestMapping("/categories")
+//@RequestMapping("/categories")
 @SecurityRequirement(name = "Bearer Authentication")
 @RestController
 public class CategoryController {
 	@Autowired
 	private ICategoryService categoryService;
 	
-	@PostMapping("")
+	@PostMapping("admin/categories")
 	public ApiRespond<String> createCategory( @RequestBody Map<String, Object> json){
 		String name=(String)json.get("name");
 		if(name==null||name.trim().isEmpty()) throw new AppException(ErrorCode.INFOR_EMPTY);
 		categoryService.createCategory(name);
 		return ApiRespond.<String>builder().build();
 	}
-	@PutMapping("/{id}")
+	@PutMapping("admin/categories/{id}")
 	public ApiRespond<String> updateCategory( @RequestBody Map<String, Object> json, @PathVariable(name = "id") int id){
 		String name=(String)json.get("name");
-		boolean isDeleted=(boolean) json.get("isDeleted");
+		Boolean isDeleted=(Boolean) json.getOrDefault("isDeleted",null);
 		if(name==null||name.trim().isEmpty()) throw new AppException(ErrorCode.INFOR_EMPTY);
 		categoryService.updateCategory(name,isDeleted, id);
 		return ApiRespond.<String>builder().build();
 	}
-	@GetMapping("")
+	@GetMapping("admin/categories")
 	public ApiRespond<List<CategoryResponse>> getAll(){
 		return ApiRespond.<List<CategoryResponse>>builder()
-				.results(categoryService.getAll())
+				.results(categoryService.getAll(null))
 				.build();
 	}
-	@DeleteMapping("/{id}")
-	public ApiRespond<String> deleteCategory(@PathVariable(name = "id") int id){
-		categoryService.deleteCategory(id);
+	@GetMapping("user/categories")
+	public ApiRespond<List<CategoryResponse>> getAllNotDeleted(){
+		return ApiRespond.<List<CategoryResponse>>builder()
+				.results(categoryService.getAll(false))
+				.build();
+	}
+	@PutMapping("admin/categories/toggle-visibility")
+	public ApiRespond<String> deleteCategory(@RequestBody Map<String, Object> json){
+		List<Integer> list =(ArrayList<Integer>)json.get("categoryIds");
+		boolean isDeleted=!(boolean)json.get("visible");
+		categoryService.deleteCategory(list,isDeleted);
+		
 		return ApiRespond.<String>builder()
 				.build();
 	}
-	@GetMapping("/gather-category")
+	@GetMapping("admin/categories/gather-category")
 	public ApiRespond<List<String>> gatherCategory(@RequestParam int  id){
 		
 		ApiRespond<List<String>> result=ApiRespond.<List<String>>builder()

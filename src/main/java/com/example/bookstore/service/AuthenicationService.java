@@ -71,7 +71,7 @@ public class AuthenicationService implements IAuthenicationService{
 		// TODO Auto-generated method stub
 		User temp= iUserService.findUser(authenicationRequest.getEmailOrPhoneNumber());
 		boolean passwordCorrect=passwordEncoder.matches(authenicationRequest.getPassword(), temp.getPassword());
-		if(!passwordCorrect) throw new AppException(ErrorCode.UNAUTHENTICATED);
+		if(!passwordCorrect) throw new AppException(ErrorCode.PASSWORD_INVALD);
 		
 		
 		List<String> roles=temp.getRoles().stream().map(r->
@@ -125,10 +125,7 @@ public class AuthenicationService implements IAuthenicationService{
 	public void logout(String accessToken) {
 		// TODO Auto-generated method stub
 		Jwt jwt= customJwtDecoder.decode(accessToken);
-		String fullName=jwt.getSubject();
-		Authentication authentication=SecurityContextHolder.getContext().getAuthentication();
-		System.out.println(authentication.getName());
-		if(!fullName.equals(authentication.getName())) throw new AppException(ErrorCode.UNAUTHORIZED);
+		
 		logoutTokenRepository.save(new LogoutToken(jwt.getId(),Date.from(jwt.getExpiresAt())));
 		
 		

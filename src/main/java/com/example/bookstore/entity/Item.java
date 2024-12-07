@@ -15,6 +15,8 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
@@ -47,8 +49,8 @@ public class Item  {
 
 	@Column(name = "title",nullable=false,unique = true, length=255)
 	private String title;
-	@Lob
-	@Column(name = "description",nullable=false, length=1000)
+	
+	@Column(name = "description",columnDefinition = "TEXT",nullable=false)
 	private String description;
 	
 	@Column(name = "coverType", length=50)
@@ -62,6 +64,9 @@ public class Item  {
 	
 	@Column(name = "price",nullable=false)
 	private int price;
+	
+	@Column(name = "originalPrice")
+	private int originalPrice;
 	
 	@Column(name = "width",nullable=false)
 	private double width;
@@ -80,6 +85,13 @@ public class Item  {
 	
 	@Column(name = "soldCount",nullable=false)
 	private int soldCount;
+	
+	@Column(name = "createAt")
+	private Date createAt;
+	
+	@Column(name = "updateAt")
+	private Date updateAt;
+	
 	@Builder.Default
 	@OneToMany(mappedBy="item",fetch = FetchType.LAZY)
 	private List<Cartitem> cartitems=new ArrayList<Cartitem>();
@@ -106,4 +118,15 @@ public class Item  {
 	    )
 	private List<Category> categories=new ArrayList<Category>();
 
+	
+	@PrePersist
+	public void persist() {
+		Date date=new Date();
+		createAt=date;
+		updateAt=date;
+	}
+	@PreUpdate
+	public void update() {
+		updateAt=new Date();
+	}
 }

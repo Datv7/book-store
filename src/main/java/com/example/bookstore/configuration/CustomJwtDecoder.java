@@ -1,9 +1,11 @@
 package com.example.bookstore.configuration;
 
 import javax.crypto.spec.SecretKeySpec;
+import javax.security.sasl.AuthenticationException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -37,10 +39,10 @@ public class CustomJwtDecoder implements JwtDecoder{
 		System.out.println("id");
 		int versionUser=((Long)jwt.getClaim("versionUser")).intValue();
 		System.out.println("ver");
-		User temp= userRepository.findById(jwt.getSubject()).orElseThrow(()->new AppException(ErrorCode.UNAUTHENTICATED));
+		User temp= userRepository.findById(jwt.getSubject()).orElseThrow(()-> new BadCredentialsException(""));
 		int version=temp.getVersion();
-		if(version==-1) throw new AppException(ErrorCode.UNAUTHENTICATED);
-		if(logoutTokenRepository.existsById(id) || version!=versionUser) throw new AppException(ErrorCode.UNAUTHENTICATED);
+		if(version==-1) throw new BadCredentialsException("");
+		if(logoutTokenRepository.existsById(id) || version!=versionUser) throw new BadCredentialsException("");
 		
 		 
 		return jwt;

@@ -28,10 +28,9 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.example.bookstore.configuration.AppException;
 import com.example.bookstore.configuration.ErrorCode;
 import com.example.bookstore.dto.CategoryResponse;
-import com.example.bookstore.dto.ItemInList;
-import com.example.bookstore.dto.ItemRequest;
+import com.example.bookstore.dto.ItemDetail;
 import com.example.bookstore.dto.PageCustom;
-import com.example.bookstore.dto.UserInList;
+import com.example.bookstore.dto.UserDetail;
 import com.example.bookstore.entity.Category;
 import com.example.bookstore.entity.Image;
 import com.example.bookstore.entity.Item;
@@ -70,43 +69,44 @@ public class ItemService implements IItemService{
 	
 	
 	@Override
-	public PageCustom<ItemInList> getAll(int page , int size) {
+	public List<ItemDetail> getAll() {
 		// TODO Auto-generated method stub
-		Pageable pageable=PageRequest.of(page, size);
-		Page<Item> page2= itemRepository.findAll(pageable);
-		List<ItemInList> itemInLists=new ArrayList<ItemInList>();
+//		Pageable pageable=PageRequest.of(page, size);
+		List<Item> items= itemRepository.findAll();
+		List<ItemDetail> itemDetails=new ArrayList<ItemDetail>();
 		
-		for(Item i:page2.getContent()) {
-			ItemInList itemInList=itemMapper.toItemInList(i);
-			itemInLists.add(itemInList);
+		for(Item i:items) {
+			ItemDetail itemDetail=itemMapper.toItemDetail(i);
+			itemDetail.setDescription(null);
+			itemDetail.loadSlug();
+			itemDetails.add(itemDetail);
 		}
-		return PageCustom.<ItemInList>builder()
-				.totalPage(page2.getTotalPages())
-				.data(itemInLists)
-				.build();
+		return itemDetails;
 	}
 
 	
 	
 	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	@Override
-	public Item creatItem(ItemRequest itemRequest,String itemId, boolean update) {
+	public Item creatItem(ItemDetail itemRequest,String itemId, boolean update) {
 		// TODO Auto-generated method stub
-		Item item=itemMapper.toItem(itemRequest);
-		if(update) item.setId(itemId);
+		Item item=null;
+		if(update) {
+			item=itemRepository.findById(itemId).orElseThrow(()-> new AppException(ErrorCode.ITEM_NOT_EXISTED));
+			itemMapper.updateItem(itemRequest, item);
+		}
+		else item=itemMapper.toItem(itemRequest);
 		Item temp=itemRepository.save(item);
 		setImage(itemRequest.getThumbnailUrl(),itemRequest.getGallery(), temp.getId(), update);
-		setCatagory(itemRequest.getCategories(), temp.getId());
+		setCatagory(List.of(itemRequest.getCategory()), temp.getId());
 		return temp;
 	}
 	
 	
 	@Override
-	public void deleteItem(String id) {
+	public void deleteItem(List<String> bookIds) {
 		// TODO Auto-generated method stub
-		Item temp=getItem(id);
-		temp.setQuantity(-1);
-		itemRepository.save(temp);
+		itemRepository.changeDeleteByListId(new Date(), bookIds,-1);
 	}
 	public Item getItem(String id) {
 		return itemRepository.findById(id).orElseThrow(() ->  new AppException(ErrorCode.ITEM_NOT_EXISTED));
@@ -178,6 +178,7 @@ public class ItemService implements IItemService{
 		if (responseEntity.getStatusCode().equals(HttpStatus.OK)) {
             System.out.println("succeed");
             JsonNode json=responseEntity.getBody();
+            if(json.get("data")==null) throw new AppException(ErrorCode.SERVICE_UNAVAILABLE);
             if(!json.get("data").isArray()) throw new AppException(ErrorCode.SERVICE_UNAVAILABLE);
             int i=1;
             for(JsonNode data:json.get("data")) {
@@ -197,8 +198,8 @@ public class ItemService implements IItemService{
         		HttpEntity<Void> httpEntity2=new HttpEntity<Void>(headers2);
         		ResponseEntity<JsonNode> responseEntity2= restTemplate.exchange(uribuild2.toUriString(), HttpMethod.GET, httpEntity2, JsonNode.class);
         		if (responseEntity2.getStatusCode().equals(HttpStatus.OK)) {
-        			ItemRequest itemRequest=new ItemRequest();
-                    System.out.println("succeed");
+        			ItemDetail itemRequest=new ItemDetail();
+                    System.out.println("success");
                     JsonNode json2=responseEntity2.getBody();
                     
                     String currentSeller="";
@@ -208,17 +209,17 @@ public class ItemService implements IItemService{
             			itemRequest.setTitle(title);
             			
             			if(itemRepository.existsByTitle(title)) {
-            				System.out.println("item exxisted by title");
+            				System.out.println("item existed by title");
             				continue;
             			}
             			
-            			int price=Integer.parseInt( json2.get("original_price").asText());
-            			itemRequest.setPrice(price);
-            			
+            			int originalPrice=Integer.parseInt( json2.get("original_price").asText());
+            			itemRequest.setPrice(originalPrice);
+            			itemRequest.setPrice(originalPrice*95/100);            			
             			String tempDescription=json2.get("description").asText();
-            			int y=tempDescription.lastIndexOf("<p>");
-            			String description=tempDescription.substring(0, y);
-            			itemRequest.setDescription(description);
+//            			int y=tempDescription.lastIndexOf("<p>");
+//            			String description=tempDescription.substring(0, y);
+            			itemRequest.setDescription(tempDescription);
             			
             			Set<String> gallery= new HashSet<String>();
             			for(JsonNode image: json2.get("images")) {
@@ -313,7 +314,7 @@ public class ItemService implements IItemService{
             				continue;
             			}
             			System.out.println(categoryResponse.getName()+"----------");
-            			itemRequest.setCategories(List.of(categoryResponse.getId()));
+            			itemRequest.setCategory(categoryResponse.getId());
             			
                     }catch (Exception e) {
                     	System.out.println("-----");
@@ -388,9 +389,14 @@ public class ItemService implements IItemService{
                 	System.out.println("xxxx");
                 	String fullname=dataUser.get("full_name").asText();
                 	String urlAvatar=dataUser.get("avatar_url").asText();
+                	if(urlAvatar.contains("assets")) urlAvatar="https:"+urlAvatar;
+                	
                 	User user=iUserService.creatUser( iUserService.randomUser());
                 	user.setFullName(fullname);
                 	user.setUrlAvatar(urlAvatar);
+                	String emailPart=UserDetail.genSlug(fullname).replaceAll("-", "");
+                	emailPart=emailPart.length()>6? emailPart.substring(0, 5) :emailPart;
+                	user.setEmail(emailPart+user.getEmail());
                 	userRepository.save(user);
                 	System.out.println("11111");
                 	Review review=Review.builder()

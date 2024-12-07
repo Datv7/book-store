@@ -1,6 +1,7 @@
 package com.example.bookstore.dto;
 
 import java.text.Normalizer;
+import java.util.Date;
 
 import com.example.bookstore.entity.Category;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -20,9 +21,13 @@ public class CategoryResponse {
 	private int id;
 	private String name;
 	private String slug;
-	@JsonProperty("isDeleted")
+	@JsonProperty("isHidden")
 	private boolean isDeleted;
 	
+	@JsonProperty("createdAt")
+	private Date createAt;
+	@JsonProperty("updatedAt")
+	private Date updateAt;
 	
 	
 	public static String genSlug(String name) {
@@ -37,8 +42,23 @@ public class CategoryResponse {
 
         return slug;
 	}
-	public static CategoryResponse mapCategoryResponse(Category c) {
-		return new CategoryResponse(c.getId(), c.getName(), genSlug(c.getName()), c.isDeleted());
+//	public static CategoryResponse mapCategoryResponse(Category c) {
+//		return CategoryResponse.builder()
+//				.id(c.getId())
+//				.name(c.getName())
+//				.isDeleted(c.isDeleted())
+//				.slug(genSlug(c.getName()))
+//				.createAt(c.getCreateAt())
+//				.updateAt(c.getUpdateAt())
+//				.build();
+//	}
+	public CategoryResponse(int id, String name, boolean isDeleted, Date createAt, Date updateAt) {
+		this.id = id;
+		this.name = name;
+		this.isDeleted = isDeleted;
+		this.createAt = createAt;
+		this.updateAt = updateAt;
+		this.slug=genSlug(name);
 	}
 	
 }

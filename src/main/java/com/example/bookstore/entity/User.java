@@ -1,6 +1,7 @@
 package com.example.bookstore.entity;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import jakarta.persistence.Column;
@@ -13,6 +14,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
@@ -54,10 +57,16 @@ public class User  {
 	
 	@Column(name = "urlAvatar",length=255)
 	private String urlAvatar;
-
+	@Builder.Default
 	@Column(name = "version",nullable=false)
-	private int version;
+	private int version=1;
 
+	@Column(name = "createAt")
+	private Date createAt;
+	
+	@Column(name = "updateAt")
+	private Date updateAt;
+	
 	@Builder.Default
 	@OneToMany(mappedBy="user")
 	private List<Cart> carts=new ArrayList<Cart>();
@@ -84,4 +93,15 @@ public class User  {
 	    )
 	private List<Role> roles=new ArrayList<Role>();
 
+	@PrePersist
+	public void persist() {
+		Date date=new Date();
+		createAt=date;
+		updateAt=date;
+	}
+	@PreUpdate
+	public void update() {
+		updateAt=new Date();
+	}
+	
 }

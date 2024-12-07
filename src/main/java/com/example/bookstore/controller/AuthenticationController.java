@@ -5,9 +5,11 @@ import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseCookie;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -84,31 +86,29 @@ public class AuthenticationController {
 		ApiRespond<UserResponse> result=ApiRespond.<UserResponse>builder()
 				.results((UserResponse)loginResponse[0])
 				.build();
-		Cookie cookie=new Cookie("refreshToken", (String)loginResponse[1]);
-		cookie.setHttpOnly(true);
-		cookie.setMaxAge(refreshExpiration);
-		cookie.setPath("/");
-		response.addCookie(cookie);
+		
+		ResponseCookie cookie = ResponseCookie.from("refreshToken", (String)loginResponse[1])
+                .httpOnly(true)
+                .maxAge(refreshExpiration)
+                .sameSite("None")
+                .path("/")
+                .build();
+        response.addHeader("Set-Cookie", cookie.toString());
 		return result;
 	}
-	@PostMapping("/logout")
-	public ApiRespond<String> logout(HttpServletRequest request,HttpServletResponse response,@RequestBody Map<String, Object> json) {
-		System.out.println("lkjsd");
-		String accessToken=(String)json.get("accessToken");
+	@PostMapping("/signout")
+	public ApiRespond<String> logout(HttpServletRequest request,HttpServletResponse response,@RequestHeader(name = "Authorization",required = false) String accessToken) {
+		
 		System.out.println(accessToken);
-		if(accessToken==null ||accessToken.trim().isEmpty()) throw new AppException(ErrorCode.UNAUTHENTICATED);
+		accessToken=accessToken.substring(7);
 		iAuthenicationService.logout(accessToken);
-		Cookie[] cookies= request.getCookies();
-		for(Cookie cookie:cookies) {
-			if(cookie.getName().equals("refreshToken")) {
-				cookie.setMaxAge(0);
-				cookie.setHttpOnly(true);
-				cookie.setPath("/");
-				response.addCookie(cookie);
-				
-				break;
-			}
-		}
+		ResponseCookie cookie = ResponseCookie.from("refreshToken", "expired")
+                .httpOnly(true)
+                .maxAge(0)
+                .sameSite("None")
+                .path("/")
+                .build();
+        response.addHeader("Set-Cookie", cookie.toString());
 		return ApiRespond.<String>builder().build();
 	}
 	@GetMapping("/refresh-token")
@@ -127,11 +127,15 @@ public class AuthenticationController {
 		log.info("correct");
 		String[] token =iAuthenicationService.refresh(refreshToken);
 		if(token[1]!=null) {
-			Cookie cookie=new Cookie("refreshToken", token[1]);
-			cookie.setHttpOnly(true);
-			cookie.setMaxAge(refreshExpiration);
-			cookie.setPath("/");
-			response.addCookie(cookie);
+			
+			ResponseCookie cookie = ResponseCookie.from("refreshToken", token[1])
+	                .httpOnly(true)
+	                .maxAge(refreshExpiration)
+	                .sameSite("None")
+	                .path("/")
+	                .build();
+	        response.addHeader("Set-Cookie", cookie.toString());
+
 		}
 		return ApiRespond.<String>builder()
 				.results(token[0])
@@ -153,7 +157,7 @@ public class AuthenticationController {
 	public ApiRespond<String> resetAsForgot(HttpServletRequest request,HttpServletResponse response,
 			@Valid @RequestBody PasswordResetRequest passwordResetRequest,
 			@NotBlank(message = "INFOR_EMPTY") @RequestParam(name ="token" ) String token,
-			@RequestParam(name ="logoutall" ) boolean logoutAll) {
+			@RequestParam(name ="logout-all" ) boolean logoutAll) {
 		if(
 			(redisService.value.get("token:email:"+passwordResetRequest.getEmail()))
 			.equals(token)){

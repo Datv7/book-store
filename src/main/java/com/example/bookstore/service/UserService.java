@@ -1,6 +1,7 @@
 package com.example.bookstore.service;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
@@ -20,7 +21,8 @@ import com.example.bookstore.configuration.ErrorCode;
 import com.example.bookstore.dto.AUpdateUserRequest;
 import com.example.bookstore.dto.PageCustom;
 import com.example.bookstore.dto.PasswordResetRequest;
-import com.example.bookstore.dto.UserInList;
+import com.example.bookstore.dto.ProfileProjection;
+import com.example.bookstore.dto.UserDetail;
 import com.example.bookstore.dto.UserRequest;
 import com.example.bookstore.entity.Role;
 import com.example.bookstore.entity.User;
@@ -46,7 +48,7 @@ public class UserService implements IUserService{
 		
 		User user=userMapper.toUser(userRequest);
 		user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
-		Role role=roleRepository.findByAuthorization(BaseRole.ROLE_CUSTOMER.name());
+		Role role=roleRepository.findByAuthorization(BaseRole.ROLE_CUSTOMER.name()).orElseThrow(()->new AppException(ErrorCode.ROLE_NOT_EXISTED));
 		
 		user.setRoles(List.of(role));
 		
@@ -60,13 +62,12 @@ public class UserService implements IUserService{
 	@Override
 	public void creatAdmin() {
 		if(!userRepository.existsAsAdmin(BaseRole.ROLE_ADMIN.name())) {
-			Role role=roleRepository.findByAuthorization(BaseRole.ROLE_ADMIN.name());
+			Role role=roleRepository.findByAuthorization(BaseRole.ROLE_ADMIN.name()).orElseThrow(()->new AppException(ErrorCode.ROLE_NOT_EXISTED));
 			User admin=User.builder()
-					.id(id)
 					.fullName("admin")
-					.password(passwordEncoder.encode("admin"))
+					.password(passwordEncoder.encode("Admin123."))
 					.email("admin@gmail.com")
-					.phoneNumber("0123456789")
+					.phoneNumber("0356415204")
 		//			)
 					.roles(List.of(role))
 					.build(); 
@@ -116,13 +117,13 @@ public class UserService implements IUserService{
 		int random=0;
 		do {
 			random = ThreadLocalRandom.current().nextInt(100000, 1000000);
-			email="ctm"+random+"@gmail.com";
-		}while(userRepository.existsByEmailOrPhoneNumber(email,String.valueOf(random)));
+			email=random+"@gmail.com";
+		}while(userRepository.existsByEmailOrPhoneNumber("","05"+random));
 		UserRequest userRequest=UserRequest.builder()
 				.email(email)
-				.phoneNumber(String.valueOf(random))
-				.password(String.valueOf(random))
-				.fullName("ctm"+random)
+				.phoneNumber("05"+random)
+				.password("Abc."+random)
+				.fullName("f")
 				.build();
 		return userRequest;
 	}
@@ -130,47 +131,76 @@ public class UserService implements IUserService{
 	public void updateUserByAdmin(String id,AUpdateUserRequest aUpdateUserRequest) {
 		// TODO Auto-generated method stub
 		User temp=userRepository.findById(id).orElseThrow(()->new AppException(ErrorCode.USER_NOT_EXISTED));
-		temp.setVersion(aUpdateUserRequest.getVersion());
+		if(aUpdateUserRequest.getVersion()!=0) {
+			System.out.println("update version single");
+			temp.setVersion(aUpdateUserRequest.getVersion());
+		}
 		temp.getRoles().clear();
 		for(String role: aUpdateUserRequest.getRoles()) {
-			Role tempRole=roleRepository.findByAuthorization(role);
+			Role tempRole=roleRepository.findByAuthorization("ROLE_"+role.toUpperCase()).orElseThrow(()->new AppException(ErrorCode.ROLE_NOT_EXISTED));
 			temp.getRoles().add(tempRole);
 		}
 		userRepository.save(temp);
 	}
 	@Override
-	public PageCustom<UserInList> getAll(int page, int size) {
+	public List<UserDetail> getAll() {
 		// TODO Auto-generated method stub
-		Pageable pageable=PageRequest.of(page, size);
-		List<UserInList> userInLists=new ArrayList<UserInList>();
-		Page<User> page2=userRepository.findAll(pageable);
-		for (User u:page2.getContent()) {
-			List<String> roles=u.getRoles().stream().map(r->r.getAuthorization()).collect(Collectors.toList());
-			for(Role r:u.getRoles()) System.out.println(r.getAuthorization());
-			UserInList userInList=UserInList.builder()
+//		Pageable pageable=PageRequest.of(page, size);
+		List<UserDetail> userInLists=new ArrayList<UserDetail>();
+		List<User> users=userRepository.findAll();
+		for (User u:users) {
+			List<String> roles=u.getRoles().stream().map(r->r.getAuthorization().replaceAll("ROLE_", "")).collect(Collectors.toList());
+//			for(Role r:u.getRoles()) System.out.println(r.getAuthorization());
+			
+			UserDetail userInList=UserDetail.builder()
 					.id(u.getId())
 					.fullName(u.getFullName())
 					.email(u.getEmail())
 					.phoneNumber(u.getPhoneNumber())
 					.version(u.getVersion())
 					.roles(roles)
+					.createAt(u.getCreateAt())
+					.updateAt(u.getUpdateAt())
+					.slug(UserDetail.genSlug(u.getFullName()))
 					.build();
 			userInLists.add(userInList);
 			
 		};
 
-		return PageCustom.<UserInList>builder()
-				.totalPage(page2.getTotalPages())
-				.data(userInLists)
-				.build();
+		return userInLists;
 					
 	}
 	@Override
-	public void deleteUser(String id) {
+	public void deleteUser(List<String> userIds,boolean deleted) {
 		// TODO Auto-generated method stub
-		User temp=userRepository.findById(id).orElseThrow(()->new AppException(ErrorCode.USER_NOT_EXISTED));
-		temp.setVersion(-1);
-		userRepository.save(temp);
+		int version=-1;
+		if(!deleted) version=1; 
+		userRepository.deleteByListId(new Date(), userIds,version);
+	}
+	@Override
+	public ProfileProjection getProfile(String id) {
+		// TODO Auto-generated method stub
+		return userRepository.getProfile(id);
+	}
+	@Override
+	public void updateProfile(String id, ProfileProjection profileProjection) {
+		// TODO Auto-generated method stub
+		User user=userRepository.findById(id).orElseThrow(()->new AppException(ErrorCode.USER_NOT_EXISTED))	;
+		user.setEmail(profileProjection.getEmail());
+		user.setPhoneNumber(profileProjection.getPhoneNumber());
+		user.setFullName(profileProjection.getFullName());
+		user.setUrlAvatar(profileProjection.getUrlAvatar());
+		userRepository.save(user);
+	}
+	@Override
+	public void changePassword(String id, String currentPass, String newPass,boolean logoutAll) {
+		// TODO Auto-generated method stub
+		User user=userRepository.findById(id).orElseThrow(()->new AppException(ErrorCode.USER_NOT_EXISTED));
+		boolean check=passwordEncoder.matches(currentPass, user.getPassword());
+		if(!check) throw new AppException(ErrorCode.PASSWORD_INVALD);
+		user.setPassword(passwordEncoder.encode(newPass));
+		if(logoutAll) user.setVersion(user.getVersion()+1);
+		userRepository.save(user);
 	}
 	
 	

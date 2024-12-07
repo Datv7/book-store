@@ -1,6 +1,7 @@
 package com.example.bookstore.service;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -38,6 +39,7 @@ public class CategoryService implements ICategoryService{
 	@Override
 	public void createCategory(String name) {
 		// TODO Auto-generated method stub
+		if(categoryRepository.findByName(name)!=null) throw new AppException(ErrorCode.CATEGORY_EXISTED);
 		categoryRepository.save(Category.builder()
 				.name(name)
 				.build());
@@ -46,26 +48,24 @@ public class CategoryService implements ICategoryService{
 
 	@Transactional
 	@Override
-	public void updateCategory(String name,boolean isDeleted, int id) {
+	public void updateCategory(String name,Boolean isDeleted, int id) {
 		// TODO Auto-generated method stub
 		Category category=categoryRepository.findById(id).orElseThrow(()-> new AppException(ErrorCode.CATEGORY_NOT_EXISTED));
 		category.setName(name);
 		boolean deleted=category.isDeleted();
+		if(isDeleted==null) isDeleted=deleted;
 		
 		category.setDeleted(isDeleted);
 		categoryRepository.save(category);
-		if(isDeleted && !deleted) deleteCategory(id);
+		if(isDeleted && !deleted) deleteCategory(List.of(id),true);
 		
 	}
 
 	@Override
-	public List<CategoryResponse> getAll() {
+	public List<CategoryResponse> getAll(Boolean deleted) {
 		// TODO Auto-generated method stub
-		List<Category> categories=categoryRepository.findAll();
 		
-		List<CategoryResponse> categoryResponses= categories.stream().map(c->
-					CategoryResponse.mapCategoryResponse(c)).collect(Collectors.toList());
-		return categoryResponses;
+		return categoryRepository.getAll(deleted);
 	}
 
 	@Transactional
@@ -124,15 +124,18 @@ public class CategoryService implements ICategoryService{
 	}
 
 	@Override
-	public void deleteCategory(int id) {
+	public void deleteCategory(List<Integer> categoryIds,boolean isDeleted) {
 		// TODO Auto-generated method stub
-
-		Category category=categoryRepository.findById(id).orElseThrow(()-> new AppException(ErrorCode.CATEGORY_NOT_EXISTED));
-		if(category.isDeleted()) return;
-		category.setDeleted(true);
-		categoryRepository.save(category);
-		
-		itemRepository.deleteByCateId(itemRepository.findIdByCateId(id));
+		categoryRepository.deleteByListId(new Date(),categoryIds,isDeleted);
+//		System.out.println("ok");
+		if(!isDeleted) {
+			System.out.println("not delete item by cateID");
+			itemRepository.changeDeleteByListId(new Date(),itemRepository.findIdByCateId(categoryIds),10);
+		}
+		//delete item
+		else itemRepository.changeDeleteByListId(new Date(),itemRepository.findIdByCateId(categoryIds),-1);
 	}
+
+	
 
 }

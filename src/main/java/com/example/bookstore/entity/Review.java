@@ -8,6 +8,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -38,8 +40,15 @@ public class Review  {
 	@Column(name = "rate",nullable=false)
 	private int rate;
 	
-	@Column(name = "createAt",nullable=false)
+	@Builder.Default
+	@Column(name = "hidden",nullable = false)
+	private boolean hidden=false;
+	
+	@Column(name = "createAt")
 	private Date createAt;
+	
+	@Column(name = "updateAt")
+	private Date updateAt;
 
 	@MapsId("itemId")
 	@ManyToOne
@@ -51,5 +60,17 @@ public class Review  {
 	@JoinColumn(name="user_id",referencedColumnName = "id")
 	private User user;
 
+	@PrePersist
+	public void persist() {
+		Date date=new Date();
+		if(createAt==null) {
+			createAt=date;
+		}
+		updateAt=createAt;
+	}
+	@PreUpdate
+	public void update() {
+		updateAt=new Date();
+	}
 
 }

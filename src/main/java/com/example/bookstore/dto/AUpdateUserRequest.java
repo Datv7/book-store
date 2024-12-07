@@ -11,5 +11,6 @@ import lombok.Setter;
 @Builder
 public class AUpdateUserRequest {
 	private List<String> roles;
-	private int version;
+	@Builder.Default
+	private int version=0;
 }
